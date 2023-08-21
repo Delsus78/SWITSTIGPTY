@@ -99,7 +99,7 @@ const handleStartGame = () => {
             <template #heading>GAME TIME</template>
 
             <EmbedYoutube :youtube-link="selectedYoutubeUrl"></EmbedYoutube>
-            <ValidationButton v-if="isOwner" msg="leave" @onClick="handleLeave" color="red"/>
+            <ValidationButton v-if="isOwner" msg="STOOOOP" @onClick="handleLeave" color="red"/>
         </WelcomeItem>
     </div>
 </template>

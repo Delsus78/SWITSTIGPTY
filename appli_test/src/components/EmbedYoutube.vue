@@ -14,7 +14,7 @@ export default {
     },
     computed: {
         embedLink() {
-            return this.youtubeLink.replace('https://youtu.be/', 'https://www.youtube.com/embed/');
+            return this.youtubeLink.replace('https://youtu.be/', 'https://www.youtube.com/embed/') + "?autoplay=1";
         }
     }
 }
