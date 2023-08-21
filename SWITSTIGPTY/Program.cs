@@ -18,6 +18,7 @@ services.AddControllers();
 services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "SWITSTIGPTY", Version = "v1" });
+    c.AddSignalRSwaggerGen();
 });
 
 services.Configure<ConnectionSetting>(
@@ -36,6 +37,8 @@ services.Configure<ApiSetting>(
 // services
 services.AddSingleton<GameService>();
 
+// Hub
+services.AddSignalR();
 
 // logger
 services.AddLogging(logBuilder =>
@@ -60,5 +63,6 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<GameHub>("/hub/game");
 
 app.Run();

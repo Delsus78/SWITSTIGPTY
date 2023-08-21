@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Newtonsoft.Json;
@@ -12,7 +13,6 @@ public class GameService
     private readonly MongoDbRepository _gamesRepository;
     private List<Game> _games;
     private readonly string _randomSongApiUrl;
-
 
     public GameService(
         ILogger<GameService> logger, 
@@ -61,6 +61,18 @@ public class GameService
 
         // register the game
         _games.Add(game);
+        
+        return game;
+    }
+    
+    public async Task<Game> JoinGame(string gameCode)
+    {
+        var game = _games.FirstOrDefault(g => g.GameCode == gameCode);
+        
+        if (game == null)
+            throw new Exception("Game not found");
+        
+        game.PlayerCount++;
         
         return game;
     }

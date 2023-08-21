@@ -37,4 +37,10 @@ public class GameController : ControllerBase
     {
         return _gameService.GetGames();
     }
+    
+    [HttpPost("{gameCode}", Name = "JoinGame")]
+    public async Task<Game> JoinGame(string gameCode)
+    {
+        return await _gameService.JoinGame(gameCode);
+    }
 }
