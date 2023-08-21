@@ -1,7 +1,9 @@
 <template>
-    <div>
-        <iframe :src="embedLink" width="560" height="315" allowfullscreen></iframe>
-    </div>
+    <iframe width="560" height="315"
+            :src="videoUrl"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+    </iframe>
 </template>
 
 <script>
@@ -13,9 +15,13 @@ export default {
         }
     },
     computed: {
-        embedLink() {
-            return this.youtubeLink.replace('https://youtu.be/', 'https://www.youtube.com/embed/') + "?autoplay=1";
+        videoId() {
+            // Une simple logique pour extraire l'ID de la vidéo à partir de l'URL (ceci est basique et pourrait nécessiter d'être adapté selon la forme exacte de vos URL)
+            return this.youtubeLink.split("youtu.be/")[1];
+        },
+        videoUrl() {
+            return `https://www.youtube.com/embed/${this.videoId}?autoplay=1&mute=1&vq=small`;
         }
     }
-}
+};
 </script>

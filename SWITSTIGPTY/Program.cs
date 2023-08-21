@@ -49,6 +49,7 @@ services.AddCors(options =>
 
 // services
 services.AddSingleton<GameService>();
+services.AddHostedService<AutoDeleteGames>();
 services.AddTransient<GameHubService>();
 
 // Hub
