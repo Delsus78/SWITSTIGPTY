@@ -1,17 +1,22 @@
 <template>
     <button class="validation-button" @click="validate">
-        Valider
+        {{ msg ? msg : "Validate" }}
     </button>
 </template>
 
-<script>
-export default {
-    methods: {
-        validate() {
-            // Logique de validation ici
-            console.log("Bouton validé !");
-        }
+<script setup>
+import { ref } from 'vue';
+
+const { msg } = defineProps({
+    msg: {
+        type: String,
+        required: false
     }
+});
+
+const validate = () => {
+    // Logique de validation ici
+    console.log("Bouton validé !");
 }
 </script>
 
@@ -25,10 +30,10 @@ export default {
     cursor: pointer;
     font-size: 1rem;
     transition: background-color 0.3s;
-    background-color: green;
+    background-color: var(--vt-c-green-2);
 }
 
 .validation-button:hover {
-    background-color: darkgreen;
+    background-color: var(--vt-c-green-dark);
 }
 </style>

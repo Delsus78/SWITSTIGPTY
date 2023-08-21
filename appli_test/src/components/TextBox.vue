@@ -1,17 +1,20 @@
 <template>
     <div class="text-box">
-        <input type="text" v-model="password" placeholder="Entrez le code">
+        <input type="text" v-model="password" :placeholder="placeholder" />
     </div>
 </template>
 
-<script>
-export default {
-    data() {
-        return {
-            password: ''
-        }
+<script setup>
+import { ref } from 'vue';
+
+const { placeholder } = defineProps({
+    placeholder: {
+        type: String,
+        required: true
     }
-}
+});
+
+const password = ref('');
 </script>
 
 <style scoped>

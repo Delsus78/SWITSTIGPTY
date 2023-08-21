@@ -1,11 +1,12 @@
 <script setup>
 import HelloWorld from './components/HelloWorld.vue'
 import ConnexionPage from './components/ConnexionPage.vue'
+import Logo from "@/components/icons/Logo.vue";
 </script>
 
 <template>
   <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
+    <Logo class="logo" />
 
     <div class="wrapper">
       <HelloWorld msg="SWITSTIGPTY" />
@@ -25,6 +26,9 @@ header {
 .logo {
   display: block;
   margin: 0 auto 2rem;
+  color: var(--color-logo);
+  width: 125px;
+  height: 125px;
 }
 
 @media (min-width: 1024px) {
@@ -36,6 +40,7 @@ header {
 
   .logo {
     margin: 0 2rem 0 0;
+    color: var(--color-logo);
   }
 
   header .wrapper {
