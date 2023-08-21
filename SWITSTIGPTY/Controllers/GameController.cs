@@ -38,9 +38,33 @@ public class GameController : ControllerBase
         return _gameService.GetGames();
     }
     
-    [HttpPost("{gameCode}", Name = "JoinGame")]
+    [HttpPost("{gameCode}/join", Name = "JoinGame")]
     public async Task<Game> JoinGame(string gameCode)
     {
         return await _gameService.JoinGame(gameCode);
+    }
+    
+    [HttpPost("{gameCode}/leave", Name = "LeaveGame")]
+    public async Task<ActionResult> LeaveGame(string gameCode)
+    {
+        await _gameService.LeaveGame(gameCode);
+        
+        return Ok();
+    }
+    
+    [HttpPost("{gameCode}/start", Name = "StartGame")]
+    public async Task<ActionResult> StartGame(string gameCode)
+    {
+        await _gameService.StartGame(gameCode);
+        
+        return Ok();
+    }
+    
+    [HttpPost("{gameCode}/end", Name = "EndGame")]
+    public ActionResult EndGame(string gameCode)
+    {
+        _gameService.EndGame(gameCode);
+        
+        return Ok();
     }
 }

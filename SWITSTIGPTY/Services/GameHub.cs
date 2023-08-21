@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.AspNetCore.SignalR;
 using SignalRSwaggerGen.Attributes;
 
@@ -5,25 +6,33 @@ namespace SWITSTIGPTY.Services;
 
 
 /// <summary>
-/// rejoindre un groupe via le gameCode suivi du numero de joueur = 'gameCode-1'
+/// Hub SignalR pour les parties de jeu
 /// </summary>
 [SignalRHub]
 public class GameHub : Hub
 {
+    public static readonly ConcurrentDictionary<string, HashSet<string>> GroupMembers = new();
+
     public async Task JoinGroup(string groupName)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
-        await Clients.Group(groupName).SendAsync("Send", $"{Context.ConnectionId} has joined the group {groupName}.");
+
+        // Ajouter le membre au groupe dans la collection
+        GroupMembers.AddOrUpdate(groupName, new HashSet<string> { Context.ConnectionId }, (_, existingValue) =>
+        {
+            existingValue.Add(Context.ConnectionId);
+            return existingValue;
+        });
     }
 
     public async Task LeaveGroup(string groupName)
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
-        await Clients.Group(groupName).SendAsync("Send", $"{Context.ConnectionId} has left the group {groupName}.");
-    }
 
-    public async Task SendMessageToGroup(string groupName, string message)
-    {
-        await Clients.Group(groupName).SendAsync("ReceiveMessage", message);
+        // Supprimer le membre du groupe dans la collection
+        if (GroupMembers.TryGetValue(groupName, out var members))
+        {
+            members.Remove(Context.ConnectionId);
+        }
     }
 }

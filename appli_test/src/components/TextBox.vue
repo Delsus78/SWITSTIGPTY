@@ -1,11 +1,11 @@
 <template>
     <div class="text-box">
-        <input type="text" v-model="password" :placeholder="placeholder" />
+        <input type="text" v-model="value" :placeholder="placeholder" />
     </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 const { placeholder } = defineProps({
     placeholder: {
@@ -14,7 +14,13 @@ const { placeholder } = defineProps({
     }
 });
 
-const password = ref('');
+const emit = defineEmits(["value-changed"]);
+
+const value = ref('');
+
+watch(value, (newValue) => {
+    emit('value-changed', newValue);
+});
 </script>
 
 <style scoped>

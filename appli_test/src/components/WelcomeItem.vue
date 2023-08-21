@@ -7,6 +7,12 @@
       <h3>
         <slot name="heading"></slot>
       </h3>
+      <h2>
+          <slot name="important"></slot>
+      </h2>
+      <h2>
+          <slot name="playerNumber"></slot>
+      </h2>
       <slot></slot>
     </div>
   </div>
@@ -39,6 +45,20 @@ h3 {
   font-weight: 500;
   margin-bottom: 0.4rem;
   color: var(--color-heading);
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+  color: var(--vt-c-blue-1);
+}
+
+h2[slot="playerNumber"] {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+  color: var(--vt-c-green-1);
 }
 
 @media (min-width: 1024px) {
@@ -84,3 +104,5 @@ h3 {
   }
 }
 </style>
+<script setup>
+</script>

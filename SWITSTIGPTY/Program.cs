@@ -33,8 +33,23 @@ services.Configure<ApiSetting>(
         options.RandomSongApiUrl = configuration.GetSection("ApiUrls:RandomSongApiUrl").Value;
     });
 
+// cors
+services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin",
+        builder =>
+        {
+            builder.WithOrigins("http://localhost:5173") // Ajoutez votre domaine client ici
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials(); // Important pour SignalR
+        });
+});
+
+
 // services
 services.AddSingleton<GameService>();
+services.AddTransient<GameHubService>();
 
 // Hub
 services.AddSignalR();
@@ -58,10 +73,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseCors("AllowSpecificOrigin");
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<GameHub>("/hub/game");
+app.MapHub<GameHub>("/hubs/GameHub");
+
 
 app.Run();

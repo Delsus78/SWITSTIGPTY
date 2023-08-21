@@ -13,16 +13,19 @@ public class GameService
     private readonly MongoDbRepository _gamesRepository;
     private List<Game> _games;
     private readonly string _randomSongApiUrl;
+    private readonly GameHubService _gameHubService;
 
     public GameService(
         ILogger<GameService> logger, 
         IOptions<ConnectionSetting> connectionSetting,
-        IOptions<ApiSetting> apiSetting)
+        IOptions<ApiSetting> apiSetting,
+        GameHubService gameHubService)
     {
         _logger = logger;
         _gamesRepository = new MongoDbRepository(new MongoClient(), connectionSetting.Value.DatabaseName);
         _randomSongApiUrl = apiSetting.Value.RandomSongApiUrl;
         _games = new List<Game>();
+        _gameHubService = gameHubService;
     }
     
     private IMongoCollection<Game> GetCollection() 
@@ -74,7 +77,21 @@ public class GameService
         
         game.PlayerCount++;
         
+        await _gameHubService.NotifyNewPlayerNumber(gameCode, game.PlayerCount.ToString());
+        
         return game;
+    }
+    
+    public async Task LeaveGame(string gameCode)
+    {
+        var game = _games.FirstOrDefault(g => g.GameCode == gameCode);
+        
+        if (game == null)
+            throw new Exception("Game not found");
+        
+        game.PlayerCount--;
+        
+        await _gameHubService.NotifyNewPlayerNumber(gameCode, game.PlayerCount.ToString());
     }
     
     private async Task<List<string>> GenerateSongsUrls(string spGenree)
@@ -137,8 +154,26 @@ public class GameService
         return game;
     }
     
-    public List<Game> GetGames()
+    public IEnumerable<Game> GetGames() => _games;
+
+    public void EndGame(string gameCode)
     {
-        return _games;
+        _games.RemoveAll(g => g.GameCode == gameCode);
+        
+        _gameHubService.NotifyGameEnded(gameCode);
+    }
+
+    public async Task StartGame(string gameCode)
+    {
+        const string emitName = "start-game";
+        var game = _games.FirstOrDefault(g => g.GameCode == gameCode);
+        if (game == null)
+            throw new Exception("Game not found");
+        
+        // select random main song number
+        var randomMainSongNumber = new Random().Next(1);
+        var otherSongNumber = randomMainSongNumber == 1 ? 0 : 1;
+        
+        await _gameHubService.SendToGroupExceptRandomAsync(gameCode, emitName, randomMainSongNumber.ToString(), otherSongNumber.ToString());
     }
 }
