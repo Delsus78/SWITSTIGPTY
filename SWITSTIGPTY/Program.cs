@@ -2,6 +2,7 @@ using SWITSTIGPTY.Models;
 using SWITSTIGPTY.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.UseUrls("http://*:5000");
 
 // Add services to the container.
 var services = builder.Services;
@@ -39,7 +40,7 @@ services.AddCors(options =>
     options.AddPolicy("AllowSpecificOrigin",
         builder =>
         {
-            builder.WithOrigins("http://localhost:5173") // Ajoutez votre domaine client ici
+            builder.WithOrigins("http://switstigpty.team-unc.fr") // Ajoutez votre domaine client ici
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials(); // Important pour SignalR
