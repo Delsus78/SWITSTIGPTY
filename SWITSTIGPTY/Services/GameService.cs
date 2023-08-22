@@ -11,9 +11,11 @@ public class GameService
 {
     private readonly ILogger<GameService> _logger;
     private readonly MongoDbRepository _gamesRepository;
-    private List<Game> _games;
+    private readonly List<Game> _games;
     private readonly string _randomSongApiUrl;
     private readonly GameHubService _gameHubService;
+    private readonly List<string> _all_genres;
+    private readonly List<string> _all_random_songs_words;
 
     public GameService(
         ILogger<GameService> logger, 
@@ -26,6 +28,8 @@ public class GameService
         _randomSongApiUrl = apiSetting.Value.RandomSongApiUrl;
         _games = new List<Game>();
         _gameHubService = gameHubService;
+        _all_genres = GetJsonOfAllGenres();
+        _all_random_songs_words = GetJsonOfRandomSongsWords();
     }
     
     private IMongoCollection<Game> GetCollection() 
@@ -33,8 +37,8 @@ public class GameService
     
     public string GenerateGameCode()
     {
-        var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        var stringChars = new char[4];
+        var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0987654321";
+        var stringChars = new char[5];
         var random = new Random();
     
         for (var i = 0; i < stringChars.Length; i++)
@@ -47,7 +51,7 @@ public class GameService
         return finalString;
     }
 
-    public async Task<Game> CreateGame()
+    public async Task<Game> CreateGame(string type, string? genre)
     {
         var gameCode = GenerateGameCode();
         
@@ -59,7 +63,7 @@ public class GameService
         };
         
         // generate songs
-        var songsUrls = await GenerateSongsUrls("");
+        var songsUrls = await GenerateSongsUrls(type, genre);
         game.SongsUrls = songsUrls;
 
         // register the game
@@ -93,49 +97,117 @@ public class GameService
         
         await _gameHubService.NotifyNewPlayerNumber(gameCode, game.PlayerCount.ToString());
     }
-    
-    private async Task<List<string>> GenerateSongsUrls(string spGenree)
+
+    private List<string> GetJsonOfAllGenres()
     {
-        // recupérer la liste des mots aleatoires dans le json random_songs_words.json
-        var randomSongsWords = File.ReadAllText("random_songs_words.json");
-        var randomSongsWordsJson = JsonConvert.DeserializeObject<IEnumerable<string>>(randomSongsWords);
+        var allgenres = File.ReadAllText("all_genres.json");
         
-        if (randomSongsWordsJson == null)
+        if (allgenres == null)
+            throw new Exception("all_genres.json is empty");
+        
+        return JsonConvert.DeserializeObject<List<string>>(allgenres);
+    }
+    
+    private List<string> GetJsonOfRandomSongsWords()
+    {
+        var randomSongsWords = File.ReadAllText("random_songs_words.json");
+        
+        if (randomSongsWords == null)
             throw new Exception("random_songs_words.json is empty");
         
-        var songsWordsJson = randomSongsWordsJson as string[] ?? randomSongsWordsJson.ToArray();
-        
-        // random Track 1
-        var randomSearchWord_Song1 = songsWordsJson.ElementAt(new Random().Next(songsWordsJson.Length));
-        
-        var tracks_For_Song1 = await GetTracks(randomSearchWord_Song1);
-        var randomTrack1 = tracks_For_Song1.tracks.ElementAt(new Random().Next(tracks_For_Song1.tracks.Count));
-
-        var songName_Song1 = randomTrack1.Name.Replace("\"", "");
-        var artistName_Song1 = randomTrack1.Artists[0].Name.Replace("\"", "");
-        
-        var youtubeUrl_Song1 = await GetYoutubeUrl(songName_Song1, artistName_Song1);
-        
-        // random Track 2
-        var randomSearchWord_Song2 = songsWordsJson.ElementAt(new Random().Next(songsWordsJson.Length));
-        
-        var tracks_For_Song2 = await GetTracks(randomSearchWord_Song2);
-        var randomTrack2 = tracks_For_Song2.tracks.ElementAt(new Random().Next(tracks_For_Song2.tracks.Count));
-
-        var songName_Song2 = randomTrack2.Name.Replace("\"", "");
-        var artistName_Song2 = randomTrack2.Artists[0].Name.Replace("\"", "");
-        
-        var youtubeUrl_Song2 = await GetYoutubeUrl(songName_Song2, artistName_Song2);
-        
-        return new List<string> {youtubeUrl_Song1, youtubeUrl_Song2};
+        return JsonConvert.DeserializeObject<List<string>>(randomSongsWords);
     }
+    
+    public IEnumerable<string> GetAllGenres() => _all_genres;
+    public IEnumerable<string> GetRandomSongsWords() => _all_random_songs_words;
 
-    private async Task<Tracks> GetTracks(string randomSearchWord)
+    private async Task<List<string>> GenerateSongsUrls(string type, string? spGenree)
     {
-        var result = await ApiUtils.GetAsync(_randomSongApiUrl + "search?q=" + randomSearchWord + "&type=track&based_on=all&limit=50");
-        return JsonConvert.DeserializeObject<Tracks>(result);
+        // check types
+        type = type.ToLower();
+        spGenree = spGenree?.ToLower();
+
+        var songsUrls = new List<string>();
+        switch (type)
+        {
+            case "all":
+                songsUrls = await GenerateRandomAllSongsUrls(2);
+                break;
+            case "top-all-time":
+                songsUrls = await GenerateRandomTypedSongsUrls("top-all-time", 2);
+                break;
+            case "genre":
+                songsUrls = await GenerateRandomGenredSongsUrls(spGenree, 2);
+                break;
+            default:
+                throw new Exception("Type is not correct");
+        }
+        
+        // generate songs urls
+        
+        
+        return songsUrls;
     }
 
+    private Random _random = new();
+    
+    #region GenerateRandomSongsUrls
+    private async Task<List<string>> GenerateRandomSongsUrls(string keyword, int count, TrackSource trackSource)
+    {
+        var res = new List<string>();
+
+        async Task<Tracks> GetTracksAsync()
+        {
+            string apiUrl = trackSource switch
+            {
+                TrackSource.Type => $"{_randomSongApiUrl}random-songs?key={keyword}&limit=51",
+                TrackSource.Genre => $"{_randomSongApiUrl}search?q={keyword}&type=&based_on=genre",
+                TrackSource.RandomWord => $"{_randomSongApiUrl}search?q={keyword}&type=track&based_on=all&limit=50",
+                _ => throw new InvalidOperationException("Unknown track source")
+            };
+
+            var result = await ApiUtils.GetAsync(apiUrl);
+            return JsonConvert.DeserializeObject<Tracks>(result);
+        }
+
+        for (var i = 0; i < count; i++)
+        {
+            var tracksForSong = await GetTracksAsync();
+            var randomTrack = tracksForSong.tracks.ElementAt(_random.Next(tracksForSong.tracks.Count));
+
+            var songNameSong = randomTrack.Name.Replace("\"", "");
+            var artistNameSong = randomTrack.Artists[0].Name.Replace("\"", "");
+
+            var youtubeUrlSong = await GetYoutubeUrl(songNameSong, artistNameSong);
+
+            res.Add(youtubeUrlSong);
+        }
+
+        return res;
+    }
+
+    public async Task<List<string>> GenerateRandomTypedSongsUrls(string type, int count)
+        => await GenerateRandomSongsUrls(type, count, TrackSource.Type);
+
+    public async Task<List<string>> GenerateRandomGenredSongsUrls(string genre, int count)
+        => await GenerateRandomSongsUrls(genre, count, TrackSource.Genre);
+
+    public async Task<List<string>> GenerateRandomAllSongsUrls(int count)
+    {
+        var songsWords = GetRandomSongsWords().ToList();
+        var randomSearchWordSong = songsWords.ElementAt(_random.Next(songsWords.Count));
+
+        return await GenerateRandomSongsUrls(randomSearchWordSong, count, TrackSource.RandomWord);
+    }
+
+    enum TrackSource
+    {
+        Type,
+        Genre,
+        RandomWord
+    }
+    #endregion
+    
     private async Task<string> GetYoutubeUrl(string songName, string artistName)
     {
         var url = _randomSongApiUrl + "get-song-video?song=" + songName + "&artist="+ artistName;

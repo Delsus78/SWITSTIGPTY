@@ -20,10 +20,20 @@ public class GameController : ControllerBase
         _gameService = gameService;
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="type">
+    /// top-all-time
+    /// all
+    /// genre</param>
+    /// <param name="genre">
+    /// </param>
+    /// <returns></returns>
     [HttpGet(Name = "CreateGame")]
-    public async Task<Game> CreateGame()
+    public async Task<Game> CreateGame(string type, string? genre)
     {
-        return await _gameService.CreateGame();
+        return await _gameService.CreateGame(type, genre);
     }
     
     [HttpGet("{gameCode}", Name = "GetGame")]
@@ -31,11 +41,17 @@ public class GameController : ControllerBase
     {
         return await _gameService.GetGame(gameCode);
     }
-    
+
     [HttpGet("all", Name = "GetGames")]
     public async Task<IEnumerable<Game>> GetGames()
     {
         return _gameService.GetGames();
+    }
+    
+    [HttpGet("allgenres", Name = "GetAllGenres")]
+    public async Task<IEnumerable<string>> GetAllGenres()
+    {
+        return _gameService.GetAllGenres();
     }
     
     [HttpPost("{gameCode}/join", Name = "JoinGame")]
