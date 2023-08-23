@@ -20,7 +20,7 @@ export default {
             return this.youtubeLink.split("youtu.be/")[1];
         },
         videoUrl() {
-            return `https://www.youtube.com/embed/${this.videoId}?autoplay=1&mute=1&vq=small`;
+            return `https://www.youtube.com/embed/${this.videoId}?autoplay=1&mute=0&vq=small`;
         }
     }
 };

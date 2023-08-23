@@ -27,9 +27,10 @@ const handleCodeRetrieved = async (code) => {
     }
 }
 
-const handleGameCreated = async () => {
+const handleGameCreated = async (gameParams) => {
     try {
-        const response = await axios.get(config.apiUrl + "Game");
+        const url = config.apiUrl + "Game?type=" + gameParams.type + (gameParams.type === "genre" ? ("&genre=" + gameParams.genre) : "");
+        const response = await axios.get(url);
 
         isOwner.value = true;
         assignGameStore(response.data);

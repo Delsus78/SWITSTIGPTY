@@ -25,9 +25,27 @@ watch(value, (newValue) => {
 
 <style scoped>
 .text-box {
+    position: relative;
     margin-top: 1rem;
-    display: flex;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    cursor: pointer;
 }
+
+input {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    background: var(--color-background);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    font-size: 1rem;
+    width: 100%;
+    appearance: none;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
 
 input[type="text"] {
     padding: 0.5rem 1rem;
@@ -38,4 +56,14 @@ input[type="text"] {
     font-size: 1rem;
     width: 100%;
 }
+
+input:hover {
+    border-color: var(--vt-c-green-2);
+}
+
+input:focus {
+    border-color: var(--vt-c-green-2);
+    box-shadow: 0 0 0 3px rgba(0, 128, 0, 0.3); /* Cette couleur est juste un exemple. */
+}
+
 </style>

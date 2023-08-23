@@ -37,10 +37,10 @@ services.Configure<ApiSetting>(
 // cors
 services.AddCors(options =>
 {
-    options.AddPolicy("AllowSpecificOrigin",
-        builder =>
+    options.AddDefaultPolicy(builder =>
         {
-            builder.WithOrigins("http://switstigpty.team-unc.fr") // Ajoutez votre domaine client ici
+            Console.Out.WriteLine("Adding cors policy");
+            builder.WithOrigins("http://localhost:5173", "http://switstigpty.team-unc.fr") // Ajoutez votre domaine client ici
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials(); // Important pour SignalR
@@ -75,7 +75,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowSpecificOrigin");
+app.UseCors();
 app.UseAuthorization();
 
 app.MapControllers();
