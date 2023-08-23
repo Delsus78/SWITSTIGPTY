@@ -55,9 +55,9 @@ public class GameController : ControllerBase
     }
     
     [HttpPost("{gameCode}/join", Name = "JoinGame")]
-    public async Task<Game> JoinGame(string gameCode)
+    public async Task<Game> JoinGame(string gameCode, string playerName)
     {
-        return await _gameService.JoinGame(gameCode);
+        return await _gameService.JoinGame(gameCode, playerName);
     }
     
     [HttpPost("{gameCode}/leave", Name = "LeaveGame")]

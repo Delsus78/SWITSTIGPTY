@@ -11,7 +11,10 @@ public class GameService
 {
     private readonly ILogger<GameService> _logger;
     private readonly MongoDbRepository _gamesRepository;
+    
     private readonly List<Game> _games;
+    private readonly List<Player> _players;
+    
     private readonly string _randomSongApiUrl;
     private readonly GameHubService _gameHubService;
     private readonly List<string> _all_genres;
@@ -72,7 +75,7 @@ public class GameService
         return game;
     }
     
-    public async Task<Game> JoinGame(string gameCode)
+    public async Task<Game> JoinGame(string gameCode, string playerName)
     {
         var game = _games.FirstOrDefault(g => g.GameCode == gameCode);
         
