@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Newtonsoft.Json;
 using SWITSTIGPTY.Models;
@@ -13,7 +14,6 @@ public class GameService
     private readonly MongoDbRepository _gamesRepository;
     
     private readonly List<Game> _games;
-    private readonly List<Player> _players;
     
     private readonly string _randomSongApiUrl;
     private readonly GameHubService _gameHubService;
@@ -34,14 +34,11 @@ public class GameService
         _all_genres = GetJsonOfAllGenres();
         _all_random_songs_words = GetJsonOfRandomSongsWords();
     }
-    
-    private IMongoCollection<Game> GetCollection() 
-        => _gamesRepository.GetCollection<Game>();
-    
-    public string GenerateGameCode()
+
+    public string GenerateId(int length = 5)
     {
         var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0987654321";
-        var stringChars = new char[5];
+        var stringChars = new char[length];
         var random = new Random();
     
         for (var i = 0; i < stringChars.Length; i++)
@@ -56,13 +53,13 @@ public class GameService
 
     public async Task<Game> CreateGame(string type, string? genre)
     {
-        var gameCode = GenerateGameCode();
+        var gameCode = GenerateId();
         
         var game = new Game
         {
             GameCode = gameCode,
-            PlayerCount = 1,
-            SongsUrls = new List<string>()
+            SongsUrls = new List<string>(),
+            Players = new List<Player>()
         };
         
         // generate songs
@@ -75,32 +72,48 @@ public class GameService
         return game;
     }
     
-    public async Task<Game> JoinGame(string gameCode, string playerName)
+    public async Task<JoinGameDTO> JoinGame(string gameCode, string playerName)
     {
         var game = _games.FirstOrDefault(g => g.GameCode == gameCode);
+        var playerId = GenerateId();
         
         if (game == null)
             throw new Exception("Game not found");
+
         
-        game.PlayerCount++;
+        game.Players.Add(new Player
+        {
+            Id = playerId,
+            Name = playerName,
+            Voters = new HashSet<string>(),
+            ImageUrl = "https://www.cc-cln.fr/build/images/huchet/pictos/icon-user.png"
+        });
         
         await _gameHubService.NotifyNewPlayerNumber(gameCode, game.PlayerCount.ToString());
         
-        return game;
+        return new JoinGameDTO
+        {
+            GameCode = gameCode,
+            SongsUrls = game.SongsUrls,
+            PlayerCount = game.PlayerCount,
+            PlayerId = playerId
+        };
     }
     
-    public async Task LeaveGame(string gameCode)
+    public async Task LeaveGame(string gameCode, string playerId)
     {
         var game = _games.FirstOrDefault(g => g.GameCode == gameCode);
         
         if (game == null)
             throw new Exception("Game not found");
         
-        game.PlayerCount--;
-        
+        game.Players.RemoveAll(p => p.Id == playerId);
+
         await _gameHubService.NotifyNewPlayerNumber(gameCode, game.PlayerCount.ToString());
     }
 
+    #region GenerateRandomSongsUrls
+    
     private List<string> GetJsonOfAllGenres()
     {
         var allgenres = File.ReadAllText("all_genres.json");
@@ -151,10 +164,8 @@ public class GameService
         
         return songsUrls;
     }
-
-    private Random _random = new();
     
-    #region GenerateRandomSongsUrls
+    private Random _random = new();
     private async Task<List<string>> GenerateRandomSongsUrls(string keyword, int count, TrackSource trackSource)
     {
         var res = new List<string>();
@@ -249,6 +260,26 @@ public class GameService
         var randomMainSongNumber = new Random().Next(1);
         var otherSongNumber = randomMainSongNumber == 1 ? 0 : 1;
         
-        await _gameHubService.SendToGroupExceptRandomAsync(gameCode, emitName, randomMainSongNumber.ToString(), otherSongNumber.ToString());
+        await _gameHubService.SendToGroupExceptRandomAsync(
+            gameCode, 
+            emitName, 
+            new StartingGameDTO {Players = game.Players, IndexOfSong = randomMainSongNumber}, 
+            new StartingGameDTO {Players = game.Players, IndexOfSong = otherSongNumber});
+    }
+
+    public async Task Vote(string gameCode, string votantId, string voteId)
+    {
+        var game = await GetGame(gameCode);
+        
+        var player = game.Players.FirstOrDefault(p => p.Id == voteId);
+        
+        var votant = game.Players.FirstOrDefault(p => p.Id == votantId);
+        
+        if (player == null || votant == null)
+            throw new Exception("Player not found");
+
+        player.Voters.Add(votant.Name);
+        
+        await _gameHubService.NotifyNewVote(gameCode, votantId);
     }
 }

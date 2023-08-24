@@ -1,5 +1,5 @@
 <template>
-    <div class="text-box">
+    <div :class="{ 'text-box': true, 'errored': isErrored }">
         <input type="text" v-model="value" :placeholder="placeholder" />
     </div>
 </template>
@@ -7,10 +7,15 @@
 <script setup>
 import { ref, watch } from 'vue';
 
-const { placeholder } = defineProps({
+const { placeholder, isErrored } = defineProps({
     placeholder: {
         type: String,
         required: true
+    },
+    isErrored: {
+        type: Boolean,
+        required: false,
+        default: false
     }
 });
 
@@ -30,6 +35,10 @@ watch(value, (newValue) => {
     border: 1px solid var(--color-border);
     border-radius: 4px;
     cursor: pointer;
+}
+
+.text-box.errored {
+    border-color: var(--vt-c-red-2);
 }
 
 input {

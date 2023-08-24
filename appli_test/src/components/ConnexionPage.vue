@@ -8,17 +8,19 @@ import {onMounted, ref} from "vue";
 import Dropdown from "@/components/Dropdown.vue";
 import axios from "axios";
 import config from "@/config";
+import PseudoIcon from "@/components/icons/IconPseudo.vue";
 
 const gameCode = ref('');
 const type = ref('all');
 const genre = ref('rap');
+const pseudo = ref('');
+const isErrored = ref(false);
 const emit = defineEmits(["code-retrieved","game-created"]);
 
 const allGenres = ref([]);
 
 const getAllGenres = async () => {
     const response = await axios.get(config.apiUrl + "Game/allgenres");
-    // transform data from ["1","2"] to [{value: "1", label: "1"}, {value: "2", label: "2"}]
     let res = response.data.map(genre => ({value: genre, label: genre}));
     return res;
 }
@@ -30,8 +32,13 @@ onMounted(async () => {
 const handleCodeValueChanged = (newValue) => {
     gameCode.value = newValue;
 }
+
 const handleTypeValueChanged = (newValue) => {
     type.value = newValue;
+}
+
+const handlePseudoValueChanged = (newValue) => {
+    pseudo.value = newValue;
 }
 
 const handleGenreValueChanged = (newValue) => {
@@ -39,16 +46,34 @@ const handleGenreValueChanged = (newValue) => {
 }
 
 const handleCodeRetrieved = () => {
-    emit('code-retrieved', gameCode.value);
+    if (pseudo.value.length === 0) {
+        isErrored.value = true;
+        return;
+    }
+
+    emit('code-retrieved', gameCode.value, pseudo.value);
 }
 
 const handleGameCreation = () => {
-    emit('game-created', {type: type.value, genre: genre.value});
+    if (pseudo.value.length === 0) {
+        isErrored.value = true;
+        return;
+    }
+
+    emit('game-created', {type: type.value, genre: genre.value}, pseudo.value);
 }
 
 </script>
 
 <template>
+    <WelcomeItem>
+        <template #icon>
+            <PseudoIcon />
+        </template>
+        <template #heading>Super pseudo</template>
+
+        <TextBox placeholder="PSEUDO" @value-changed="handlePseudoValueChanged" :is-errored="isErrored"/>
+    </WelcomeItem>
     <WelcomeItem>
         <template #icon>
             <GameCodeIcon />

@@ -10,55 +10,47 @@ import config from '@/config.js';
 
 const store = useStore();
 const gameCode = computed(() => store.state.gameCode);
+const playerId = computed(() => store.state.playerId);
 const isOwner = ref(false);
 
-const handleCodeRetrieved = async (code) => {
+const handleCodeRetrieved = async (code, playerName) => {
     // join game
     try {
-        const response = await axios.post(config.apiUrl + "Game/" + code + "/join");
+        const response = await axios.post(config.apiUrl + "Game/" + code + "/join?playerName=" + playerName);
 
-        // join game if game exists
         if (response.status === 200) {
             isOwner.value = false;
-            assignGameStore(response.data);
+            assignGameStoreAtJoining(response.data);
         }
     } catch (error) {
         console.error('Erreur lors de l\'appel API:', error);
     }
 }
 
-const handleGameCreated = async (gameParams) => {
+const handleGameCreated = async (gameParams, playerName) => {
     try {
         const url = config.apiUrl + "Game?type=" + gameParams.type + (gameParams.type === "genre" ? ("&genre=" + gameParams.genre) : "");
-        const response = await axios.get(url);
+        const gameInfo = await axios.get(url);
+
+        //join it
+        const response = await axios.post(config.apiUrl + "Game/" + gameInfo.data.gameCode + "/join?playerName=" + playerName);
 
         isOwner.value = true;
-        assignGameStore(response.data);
+        assignGameStoreAtJoining(response.data);
     } catch (error) {
         console.error('Erreur lors de l\'appel API:', error);
     }
 }
 
-const assignGameStore = (gameSettings) => {
-    assignCode(gameSettings.gameCode);
-    assignPlayerNumber(gameSettings.playerCount);
-    assignYoutubeUrls(gameSettings.songsUrls);
-}
+const handleVote = async (playerIdToVote) => {
+    try {
+        const url = config.apiUrl + "Game/"+ gameCode.value + "/"+ playerId.value + "/vote/" + playerIdToVote;
+        await axios.post(url);
 
-const assignCode = (code) => {
-    store.dispatch('assignGameCode', code);
-}
-
-const assignPlayerNumber = (number) => {
-    store.dispatch('assignPlayerNumber', number);
-}
-
-const assignYoutubeUrls = (urls) => {
-    store.dispatch('assignYoutubeUrls', urls);
-}
-
-const resetAll = () => {
-    store.dispatch('resetAll');
+        console.log("Player "+ playerId.value +" is voting for player "+ playerIdToVote);
+    } catch (error) {
+        console.error('Erreur lors de l\'appel API:', error);
+    }
 }
 
 const handleLeaveGame = async () => {
@@ -91,6 +83,17 @@ const handleStartGame = async () => {
         console.error('Erreur lors de l\'appel API:', error);
     }
 }
+
+const assignGameStoreAtJoining = (gameSettings) => {
+    store.dispatch('assignGameCode', gameSettings.gameCode);
+    store.dispatch('assignPlayerNumber', gameSettings.playerCount);
+    store.dispatch('assignYoutubeUrls', gameSettings.songsUrls);
+    store.dispatch('assignPlayerId', gameSettings.playerId);
+}
+
+const resetAll = () => {
+    store.dispatch('resetAll');
+}
 </script>
 
 <template>
@@ -106,7 +109,7 @@ const handleStartGame = async () => {
     <ConnexionPage v-if="gameCode == null"
        @code-retrieved="handleCodeRetrieved"
        @game-created="handleGameCreated"/>
-    <GamePage v-else @leave="handleLeaveGame" @start="handleStartGame" :is-owner="isOwner"/>
+    <GamePage v-else @leave="handleLeaveGame" @start="handleStartGame" :is-owner="isOwner" @vote="handleVote"/>
   </main>
 </template>
 
