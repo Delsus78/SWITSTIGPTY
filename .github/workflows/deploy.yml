@@ -26,7 +26,11 @@ jobs:
         cd appli_test
         npm ci
         npm run build
-
+        
+    - name: Display npm error log
+      if: failure()   # Only runs this step if previous step failed
+      run: cat /home/runner/.npm/_logs/*-debug.log
+      
     - name: Deploy to VPS
       env:
         DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
