@@ -76,14 +76,6 @@ public class GameController : ControllerBase
         return Ok();
     }
 
-    [HttpPost("{gameCode}/start", Name = "StartGame")]
-    public async Task<ActionResult> StartGame(string gameCode)
-    {
-        await _gameService.StartGame(gameCode);
-        
-        return Ok();
-    }
-    
     [HttpPost("{gameCode}/end", Name = "EndGame")]
     public async Task<ActionResult> EndGame(string gameCode)
     {
@@ -95,7 +87,7 @@ public class GameController : ControllerBase
     [HttpPost("{gameCode}/next", Name = "NextManche")]
     public async Task<ActionResult> NextManche(string gameCode)
     {
-        await _gameService.NextManche(gameCode);
+        await _gameService.NextRound(gameCode);
         
         return Ok();
     }

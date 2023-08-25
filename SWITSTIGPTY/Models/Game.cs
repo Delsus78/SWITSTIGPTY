@@ -13,4 +13,6 @@ public class Game
     public int CurrentManche { get; set; }
     public int PointPerRightVote { get; set; }
     public int PointPerVoteFooled { get; set; }
+    public string? Genre { get; set; }
+    public string Type { get; set; }
 }
