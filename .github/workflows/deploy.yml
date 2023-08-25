@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies and build
       run: |
         cd appli_test
-        npm ci
+        npm install
         npm run build
         
     - name: Display npm error log
