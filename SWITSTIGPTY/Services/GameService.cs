@@ -119,6 +119,14 @@ public class GameService
 
     #region GenerateRandomSongsUrls
     
+    private async Task<string> GetYoutubeUrl(string songName, string artistName)
+    {
+        var url = _randomSongApiUrl + "get-song-video?song=" + songName + "&artist="+ artistName;
+        var result = await ApiUtils.GetAsync(url);
+        
+
+        return "https://youtu.be/" + result.Replace("\"", "");
+    }
     private List<string> GetJsonOfAllGenres()
     {
         var allgenres = File.ReadAllText("all_genres.json");
@@ -226,15 +234,6 @@ public class GameService
         RandomWord
     }
     #endregion
-    
-    private async Task<string> GetYoutubeUrl(string songName, string artistName)
-    {
-        var url = _randomSongApiUrl + "get-song-video?song=" + songName + "&artist="+ artistName;
-        var result = await ApiUtils.GetAsync(url);
-        
-
-        return "https://youtu.be/" + result.Replace("\"", "");
-    }
 
     public async Task<Game> GetGame(string gameCode)
     {
@@ -263,10 +262,10 @@ public class GameService
         var game = _games.FirstOrDefault(g => g.GameCode == gameCode);
         if (game == null)
             throw new Exception("Game not found");
-        
+        /*
         if (game.PlayerCount < nbImpostors + 1)
             throw new Exception("Not enough players");
-
+        */
         // select random main song number and give it to random number of players (impostors)
         var rand = new Random();
         var randomMainSongNumber = rand.Next(1);

@@ -5,7 +5,7 @@
             <h2 :class="{'impostor': item?.isImpostor}">{{ item?.name }} {{ item?.isImpostor ? 'IMPOSTOR' : ''}}</h2>
             <div class="voter-bar" :style="{ width: voterPercentage + '%' }"></div>
             <p class="voters">{{ item?.votersNames.join(', ') }}</p>
-            <p class="songUrl" v-if="item?.songUrl">Song URL: {{ item?.songUrl }}</p>
+            <p class="songUrl" v-if="item?.songUrl">Song URL: <a :href="item?.songUrl">{{ item?.songUrl }}</a></p>
         </div>
     </div>
 </template>
@@ -22,7 +22,6 @@ const { item } = defineProps({
     }
 });
 const allPlayers = computed(() => store.state.players);
-
 
 const voterPercentage = computed(() => {
     if (item?.votersNames.length === 0) return 0;
