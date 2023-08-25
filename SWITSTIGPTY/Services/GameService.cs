@@ -85,7 +85,7 @@ public class GameService
         {
             Id = playerId,
             Name = playerName,
-            Voters = new HashSet<string>(),
+            VotersNames = new HashSet<string>(),
             ImageUrl = "https://www.cc-cln.fr/build/images/huchet/pictos/icon-user.png"
         });
         
@@ -242,11 +242,14 @@ public class GameService
     
     public IEnumerable<Game> GetGames() => _games;
 
-    public void EndGame(string gameCode)
+    public async Task EndGame(string gameCode)
     {
-        _games.RemoveAll(g => g.GameCode == gameCode);
+        var game = await GetGame(gameCode);
         
-        _gameHubService.NotifyGameEnded(gameCode);
+        _gameHubService.NotifyGameEnded(gameCode, game.Players);
+        
+        
+        _games.RemoveAll(g => g.GameCode == gameCode);
     }
 
     public async Task StartGame(string gameCode)
@@ -278,7 +281,7 @@ public class GameService
         if (player == null || votant == null)
             throw new Exception("Player not found");
 
-        player.Voters.Add(votant.Name);
+        player.VotersNames.Add(votant.Name);
         
         await _gameHubService.NotifyNewVote(gameCode, votantId);
     }

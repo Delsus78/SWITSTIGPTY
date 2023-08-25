@@ -22,14 +22,14 @@ public class AutoDeleteGames : IHostedService
 
     }
 
-    private void LoopAsync(object? state)
+    private async void LoopAsync(object? state)
     {
         // supprimer toutes les games
         var games = _gameService.GetGames();
         foreach (var game in games)
         {
-            _gameService.EndGame(game.GameCode);
-            _gameHubService.NotifyGameEnded(game.GameCode);
+            await _gameService.EndGame(game.GameCode);
+            _gameHubService.NotifyGameEnded(game.GameCode, game.Players);
         }
         
     }

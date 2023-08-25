@@ -11,18 +11,20 @@ import config from "@/config";
 import axios from "axios";
 import EmbedYoutube from "@/components/EmbedYoutube.vue";
 import VotePage from "@/components/VotePage.vue";
+import ResultPage from "@/components/ResultPage.vue";
+import PlayerResult from "@/components/PlayerResult.vue";
 
 
-const emit = defineEmits(["leave","start","vote"]);
-const gameStarted = ref(false);
+const emit = defineEmits(["leave","start","vote","endGame"]);
+const gamePhase = ref("not-started");
 const gameCode = computed(() => store.state.gameCode);
 const players = computed(() => store.state.players);
 const playerNumber = computed(() => store.state.playerNumber);
 const youtubeUrls = computed(() => store.state.youtubeUrls);
 const selectedYoutubeUrl = ref("");
 
-const setGameAsStarted = (newVal) => {
-    gameStarted.value = newVal;
+const setGamePhase = (newVal) => {
+    gamePhase.value = newVal;
 }
 
 const { isOwner } = defineProps({
@@ -45,19 +47,20 @@ connection.start().catch(err => console.error(err.toString())).then(() => {
 const handleLeave = async () => {
     connection.invoke("LeaveGroup", gameCode.value).catch(err => console.error(err.toString())).then(() => {
         console.log("Left group");
-    }).finally(() => emit('leave'));
+    }).finally(() => emit('leave', gamePhase.value));
 }
 
 connection.on("start-game", (message) => {
     selectedYoutubeUrl.value = youtubeUrls.value[message.indexOfSong];
     assignPlayers(message.players);
     console.log(selectedYoutubeUrl.value);
-    setGameAsStarted(true);
-
+    setGamePhase("started");
 });
 
-connection.on("game-ended", () => {
-    handleLeave();
+connection.on("game-ended", (playersReceived) => {
+    assignPlayers(playersReceived);
+    console.log(players?.value);
+    setGamePhase("result");
 });
 
 connection.on("new-vote", (votingPlayerId) => {
@@ -77,10 +80,15 @@ const assignPlayers = (players) => {
         player.hasVoted = false;
     });
     store.dispatch('assignPlayers', players);
+    console.log(players);
 }
 
 const handleStartGame = () => {
     emit('start');
+}
+
+const handleEndGame = () => {
+    emit('endGame');
 }
 
 const handleVote = (itemId) => {
@@ -90,7 +98,7 @@ const handleVote = (itemId) => {
 </script>
 
 <template>
-    <div v-if="gameStarted === false">
+    <div v-if="gamePhase === 'not-started'">
         <OwnerPage v-if="isOwner"
                    @leave="handleLeave" @start="handleStartGame"/>
         <WelcomeItem v-else>
@@ -108,14 +116,14 @@ const handleVote = (itemId) => {
             <ValidationButton msg="leave" @onClick="handleLeave" color="red"/>
         </WelcomeItem>
     </div>
-    <div v-else>
+    <div v-else-if="gamePhase === 'started'">
         <WelcomeItem>
             <template #heading>GAME TIME</template>
             <template #icon>
                 <StartIcon />
             </template>
             <EmbedYoutube :youtube-link="selectedYoutubeUrl"></EmbedYoutube>
-            <ValidationButton v-if="isOwner" msg="STOOOOP" @onClick="handleLeave" color="red"/>
+            <ValidationButton v-if="isOwner" msg="STOOOOP" @onClick="handleEndGame" color="red"/>
 
         </WelcomeItem>
         <WelcomeItem>
@@ -125,6 +133,17 @@ const handleVote = (itemId) => {
             </template>
             <VotePage @vote="handleVote" :items="players"></VotePage>
         </WelcomeItem>
+    </div>
+    <div v-else-if="gamePhase === 'result'">
+        <WelcomeItem>
+            <template #heading>Results</template>
+            <template #icon>
+                <StartIcon />
+            </template>
+            <ResultPage :players="players"></ResultPage>
+            <ValidationButton msg="leave" @onClick="handleLeave" color="red"/>
+        </WelcomeItem>
+
     </div>
 </template>
 

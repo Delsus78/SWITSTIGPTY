@@ -53,22 +53,29 @@ const handleVote = async (playerIdToVote) => {
     }
 }
 
-const handleLeaveGame = async () => {
+const handleLeaveGame = async (gamePhase) => {
     try {
-        if (isOwner.value) {
-            await axios.post(config.apiUrl + "Game/" + gameCode.value + "/end");
+        if (gamePhase !== "result")
+          await axios.post(config.apiUrl + "Game/" + gameCode.value + "/leave");
 
-            console.log("Owner is leaving the game "+ gameCode.value +" and ending it");
-        } else {
-            await axios.post(config.apiUrl + "Game/" + gameCode.value + "/leave");
-
-            console.log("Player is leaving the game "+ gameCode.value);
-        }
+        console.log("Player is leaving the game "+ gameCode.value);
     } catch (error) {
         console.error('Erreur lors de l\'appel API:', error);
     } finally {
         isOwner.value = false;
         resetAll();
+    }
+}
+
+const handleEndGame = async () => {
+    try {
+        if (isOwner.value) {
+            await axios.post(config.apiUrl + "Game/" + gameCode.value + "/end");
+
+            console.log("Owner is ending the game "+ gameCode.value);
+        }
+    } catch (error) {
+        console.error('Erreur lors de l\'appel API:', error);
     }
 }
 
@@ -109,7 +116,7 @@ const resetAll = () => {
     <ConnexionPage v-if="gameCode == null"
        @code-retrieved="handleCodeRetrieved"
        @game-created="handleGameCreated"/>
-    <GamePage v-else @leave="handleLeaveGame" @start="handleStartGame" :is-owner="isOwner" @vote="handleVote"/>
+    <GamePage v-else @leave="handleLeaveGame" @endGame="handleEndGame" @start="handleStartGame" :is-owner="isOwner" @vote="handleVote"/>
   </main>
 </template>
 

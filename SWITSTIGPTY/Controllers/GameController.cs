@@ -85,9 +85,9 @@ public class GameController : ControllerBase
     }
     
     [HttpPost("{gameCode}/end", Name = "EndGame")]
-    public ActionResult EndGame(string gameCode)
+    public async Task<ActionResult> EndGame(string gameCode)
     {
-        _gameService.EndGame(gameCode);
+        await _gameService.EndGame(gameCode);
         
         return Ok();
     }

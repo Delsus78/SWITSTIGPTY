@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
+using SWITSTIGPTY.Models;
+
 namespace SWITSTIGPTY.Services;
 
 public class GameHubService
@@ -16,7 +18,7 @@ public class GameHubService
         await _hubContext.Clients.Group(groupName).SendAsync("player-number-changed", message);
     }
     
-    public async Task SendToGroupExceptRandomAsync(string groupName, string emitName ,string message, string messageToExcept)
+    public async Task SendToGroupExceptRandomAsync(string groupName, string emitName ,object message, object messageToExcept)
     {
         if (GameHub.GroupMembers.TryGetValue(groupName, out var members))
         {
@@ -31,8 +33,13 @@ public class GameHubService
         }
     }
 
-    public void NotifyGameEnded(string groupName)
+    public void NotifyGameEnded(string groupName, List<Player> players)
     {
-        _hubContext.Clients.Group(groupName).SendAsync("game-ended");
+        _hubContext.Clients.Group(groupName).SendAsync("game-ended", players);
+    }
+    
+    public async Task NotifyNewVote(string groupName, string playerId)
+    {
+        await _hubContext.Clients.Group(groupName).SendAsync("new-vote", playerId);
     }
 }

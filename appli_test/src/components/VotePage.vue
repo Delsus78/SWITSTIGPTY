@@ -1,6 +1,5 @@
 <script setup>
 import GridItem from './GridItem.vue';
-import {ref} from "vue";
 
 const { items } = defineProps({
     items: {
@@ -8,26 +7,29 @@ const { items } = defineProps({
         default: () => []
     }
 });
+
 const emit = defineEmits(["vote"]);
-const buttonsOn = ref(true);
+
 const handleVote = (itemId) => {
+    items.forEach(item => {
+        item.isButtonOn = false;
+    });
     emit('vote', itemId);
 
-    buttonsOn.value = false;
-    console.log("Button " + buttonsOn.value);
 }
 </script>
 
 <template>
     <div class="grid-list">
         <GridItem
-                v-for="item in items"
-                :itemId="item.id"
-                :title="item.name"
-                :imageUrl="item.imageUrl"
-                :has-voted="item.hasVoted"
-                :is-button-on="buttonsOn.value"
-                @vote="handleVote"
+            v-for="item in items"
+            :key="item.id"
+            :itemId="item.id"
+            :title="item.name"
+            :imageUrl="item.imageUrl"
+            :has-voted="item.hasVoted"
+            :is-button-on="item.isButtonOn"
+            @vote="handleVote"
         />
     </div>
 </template>
