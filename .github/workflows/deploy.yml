@@ -17,7 +17,14 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: '14' # Or your Node.js version
-      
+        
+    - name: Update config.js
+      run: |
+        cd appli_test
+        echo "export default {
+            apiUrl: 'http://146.59.158.8:5000/'
+        };" > src/config.js
+        
     - name: Install dependencies and build
       run: |
         cd appli_test
