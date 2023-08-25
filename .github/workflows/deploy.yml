@@ -18,6 +18,9 @@ jobs:
       with:
         node-version: '14' # Or your Node.js version
 
+    - name: Navigate to directory
+      run: cd appli_test
+      
     - name: Install dependencies and build
       run: |
         npm ci
