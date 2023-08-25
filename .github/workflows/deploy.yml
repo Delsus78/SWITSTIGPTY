@@ -17,9 +17,6 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: '14' # Or your Node.js version
-
-    - name: Navigate to directory
-      run: cd appli_test
       
     - name: Install dependencies and build
       run: |
@@ -37,5 +34,5 @@ jobs:
       run: |
         echo "$DEPLOY_KEY" > deploy_key
         chmod 600 deploy_key
-        rsync -av --delete -e "ssh -i deploy_key -o StrictHostKeyChecking=no -p 19452" ./dist/ deploy@146.59.158.8:/var/www/switstigpty.team-unc.fr/public_html/
+        rsync -av --delete -e "ssh -i deploy_key -o StrictHostKeyChecking=no -p 19452" ./appli_test/dist/ deploy@146.59.158.8:/var/www/switstigpty.team-unc.fr/public_html/
         rm -f deploy_key
