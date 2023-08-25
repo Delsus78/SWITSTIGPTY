@@ -252,22 +252,35 @@ public class GameService
         _games.RemoveAll(g => g.GameCode == gameCode);
     }
 
-    public async Task StartGame(string gameCode)
+    public async Task StartGame(string gameCode, int nbImpostors = 1)
     {
         const string emitName = "start-game";
         var game = _games.FirstOrDefault(g => g.GameCode == gameCode);
         if (game == null)
             throw new Exception("Game not found");
         
-        // select random main song number
-        var randomMainSongNumber = new Random().Next(1);
+        if (game.PlayerCount < nbImpostors + 1)
+            throw new Exception("Not enough players");
+
+        // select random main song number and give it to random number of players (impostors)
+        var rand = new Random();
+        var randomMainSongNumber = rand.Next(1);
         var otherSongNumber = randomMainSongNumber == 1 ? 0 : 1;
         
-        await _gameHubService.SendToGroupExceptRandomAsync(
+        // populate songUrl for impostors
+        var impostors = game.Players.OrderBy(x => rand.Next()).Take(nbImpostors).ToList();
+        impostors.ForEach(i => i.SongUrl = game.SongsUrls[otherSongNumber]);
+        
+        // populate songUrl for others
+        var others = game.Players.Where(p => !impostors.Contains(p)).ToList();
+        others.ForEach(o => o.SongUrl = game.SongsUrls[randomMainSongNumber]);
+        
+        await _gameHubService.SendToGroupExceptListAsync(
             gameCode, 
-            emitName, 
+            emitName,
             new StartingGameDTO {Players = game.Players, IndexOfSong = randomMainSongNumber}, 
-            new StartingGameDTO {Players = game.Players, IndexOfSong = otherSongNumber});
+            new StartingGameDTO {Players = game.Players, IndexOfSong = otherSongNumber},
+            impostors.Select(i => i.Id).ToList());
     }
 
     public async Task Vote(string gameCode, string votantId, string voteId)

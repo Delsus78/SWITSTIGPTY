@@ -25,8 +25,17 @@ const getAllGenres = async () => {
     return res;
 }
 
+const savePseudo = () =>  {
+    localStorage.setItem('pseudo', pseudo.value);
+}
+
 onMounted(async () => {
     allGenres.value = await getAllGenres();
+
+    const savedPseudo = localStorage.getItem('pseudo');
+    if (savedPseudo) {
+        pseudo.value = savedPseudo;
+    }
 });
 
 const handleCodeValueChanged = (newValue) => {
@@ -50,7 +59,7 @@ const handleCodeRetrieved = () => {
         isErrored.value = true;
         return;
     }
-
+    savePseudo();
     emit('code-retrieved', gameCode.value, pseudo.value);
 }
 
@@ -59,7 +68,7 @@ const handleGameCreation = () => {
         isErrored.value = true;
         return;
     }
-
+    savePseudo();
     emit('game-created', {type: type.value, genre: genre.value}, pseudo.value);
 }
 
@@ -89,9 +98,9 @@ const handleGameCreation = () => {
         </template>
         <template #heading>Create a Game</template>
 
-        <ValidationButton msg="Create" @onClick="handleGameCreation"/>
         <Dropdown default-option='all' :options="[{ value: 'all', label: 'All' }, { value: 'top-all-time', label: 'Top All Time' }, { value: 'genre', label: 'Genre' }]" @value-changed="handleTypeValueChanged" />
         <Dropdown v-if="type === 'genre'" default-option='rap' :options="allGenres" :searchable="true" @value-changed="handleGenreValueChanged" />
+        <ValidationButton msg="Create" @onClick="handleGameCreation"/>
 
     </WelcomeItem>
 </template>

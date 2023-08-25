@@ -5,6 +5,7 @@
             <h3 class="player-name">{{ item?.name }}</h3>
             <div class="voter-bar" :style="{ width: voterPercentage + '%' }"></div>
             <p class="voters">{{ item?.votersNames.join(', ') }}</p>
+            <p class="songUrl" v-if="item?.songUrl">Song URL: {{ item?.songUrl }}</p>
         </div>
     </div>
 </template>
@@ -65,5 +66,10 @@ const voterPercentage = computed(() => {
 .player-result.visible {
     opacity: 1;
     transform: translateY(0);
+}
+
+.songUrl {
+    font-size: 12px;
+    margin-top: 5px;
 }
 </style>

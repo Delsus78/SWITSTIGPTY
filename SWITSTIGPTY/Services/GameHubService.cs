@@ -6,7 +6,6 @@ namespace SWITSTIGPTY.Services;
 public class GameHubService
 {
     private readonly IHubContext<GameHub> _hubContext;
-    private static readonly Random Rand = new();
 
     public GameHubService(IHubContext<GameHub> hubContext)
     {
@@ -18,18 +17,21 @@ public class GameHubService
         await _hubContext.Clients.Group(groupName).SendAsync("player-number-changed", message);
     }
     
-    public async Task SendToGroupExceptRandomAsync(string groupName, string emitName ,object message, object messageToExcept)
+    public async Task SendToGroupExceptListAsync(string groupName, string emitName ,object message, object messageToExcept, List<string> playersIdToExcept)
     {
         if (GameHub.GroupMembers.TryGetValue(groupName, out var members))
         {
             // Sélectionner un membre aléatoire
-            var randomMember = members.ElementAt(Rand.Next(members.Count));
+            var exceptedConnIds = GameHub.GroupMembers[groupName]
+                .Where(x => playersIdToExcept.Contains(x.Item2))
+                .Select(x => x.Item1)
+                .ToList();
 
             // Envoyer le message au groupe sauf au membre sélectionné
-            await _hubContext.Clients.GroupExcept(groupName, new List<string> { randomMember }).SendAsync(emitName, message);
+            await _hubContext.Clients.GroupExcept(groupName, exceptedConnIds).SendAsync(emitName, message);
             
-            // Envoyer le message au membre sélectionné
-            await _hubContext.Clients.Client(randomMember).SendAsync(emitName, messageToExcept);
+            // Envoyer le message aux membres sélectionnés
+            await _hubContext.Clients.Clients(exceptedConnIds).SendAsync(emitName, messageToExcept);
         }
     }
 

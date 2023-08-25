@@ -19,6 +19,7 @@ const emit = defineEmits(["leave","start","vote","endGame"]);
 const gamePhase = ref("not-started");
 const gameCode = computed(() => store.state.gameCode);
 const players = computed(() => store.state.players);
+const playerId = computed(() => store.state.playerId);
 const playerNumber = computed(() => store.state.playerNumber);
 const youtubeUrls = computed(() => store.state.youtubeUrls);
 const selectedYoutubeUrl = ref("");
@@ -41,7 +42,7 @@ const connection = new signalR.HubConnectionBuilder()
     .build();
 
 connection.start().catch(err => console.error(err.toString())).then(() => {
-    connection.invoke("JoinGroup", gameCode.value).catch(err => console.error(err.toString()));
+    connection.invoke("JoinGroup", gameCode.value, playerId.value).catch(err => console.error(err.toString()));
 });
 
 const handleLeave = async () => {
