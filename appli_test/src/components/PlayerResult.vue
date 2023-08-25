@@ -2,9 +2,10 @@
     <div class="player-result">
         <img :src="item?.imageUrl" alt="Joueur" class="player-image">
         <div class="player-info">
-            <h3 class="player-name">{{ item?.name }}</h3>
+            <h2 :class="{'impostor': item?.isImpostor}">{{ item?.name }} {{ item?.isImpostor ? 'IMPOSTOR' : ''}}</h2>
             <div class="voter-bar" :style="{ width: voterPercentage + '%' }"></div>
             <p class="voters">{{ item?.votersNames.join(', ') }}</p>
+            <p class="songUrl" v-if="item?.songUrl">Song URL: {{ item?.songUrl }}</p>
         </div>
     </div>
 </template>
@@ -42,6 +43,14 @@ const voterPercentage = computed(() => {
     transition: opacity 0.5s, transform 0.5s;
 }
 
+.player-info {
+    flex: 1;
+}
+
+.impostor {
+    color: var(--vt-c-red-1);
+}
+
 .player-image {
     width: 50px;
     height: 50px;
@@ -50,7 +59,7 @@ const voterPercentage = computed(() => {
 }
 
 .voter-bar {
-    background-color: var(--vt-c-green-1); /* ou votre couleur de choix */
+    background-color: var(--vt-c-blue-1); /* ou votre couleur de choix */
     height: 10px;
     max-width: 100%;
     transition: width 0.5s;
@@ -65,5 +74,10 @@ const voterPercentage = computed(() => {
 .player-result.visible {
     opacity: 1;
     transform: translateY(0);
+}
+
+.songUrl {
+    font-size: 12px;
+    margin-top: 5px;
 }
 </style>

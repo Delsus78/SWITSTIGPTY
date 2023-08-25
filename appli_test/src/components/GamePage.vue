@@ -19,6 +19,7 @@ const emit = defineEmits(["leave","start","vote","endGame"]);
 const gamePhase = ref("not-started");
 const gameCode = computed(() => store.state.gameCode);
 const players = computed(() => store.state.players);
+const playerId = computed(() => store.state.playerId);
 const playerNumber = computed(() => store.state.playerNumber);
 const youtubeUrls = computed(() => store.state.youtubeUrls);
 const selectedYoutubeUrl = ref("");
@@ -41,30 +42,26 @@ const connection = new signalR.HubConnectionBuilder()
     .build();
 
 connection.start().catch(err => console.error(err.toString())).then(() => {
-    connection.invoke("JoinGroup", gameCode.value).catch(err => console.error(err.toString()));
+    connection.invoke("JoinGroup", gameCode.value, playerId.value).catch(err => console.error(err.toString()));
 });
 
 const handleLeave = async () => {
     connection.invoke("LeaveGroup", gameCode.value).catch(err => console.error(err.toString())).then(() => {
-        console.log("Left group");
     }).finally(() => emit('leave', gamePhase.value));
 }
 
 connection.on("start-game", (message) => {
     selectedYoutubeUrl.value = youtubeUrls.value[message.indexOfSong];
     assignPlayers(message.players);
-    console.log(selectedYoutubeUrl.value);
     setGamePhase("started");
 });
 
 connection.on("game-ended", (playersReceived) => {
     assignPlayers(playersReceived);
-    console.log(players?.value);
     setGamePhase("result");
 });
 
 connection.on("new-vote", (votingPlayerId) => {
-    console.log(votingPlayerId);
     store.dispatch('setHasVoted', votingPlayerId);
 });
 
@@ -80,7 +77,6 @@ const assignPlayers = (players) => {
         player.hasVoted = false;
     });
     store.dispatch('assignPlayers', players);
-    console.log(players);
 }
 
 const handleStartGame = () => {

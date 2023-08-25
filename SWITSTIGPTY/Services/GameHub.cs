@@ -11,16 +11,19 @@ namespace SWITSTIGPTY.Services;
 [SignalRHub]
 public class GameHub : Hub
 {
-    public static readonly ConcurrentDictionary<string, HashSet<string>> GroupMembers = new();
+    public static readonly ConcurrentDictionary<string, HashSet<Tuple<string, string>>> GroupMembers = new();
 
-    public async Task JoinGroup(string groupName)
+    public async Task JoinGroup(string groupName, string playerId)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
 
         // Ajouter le membre au groupe dans la collection
-        GroupMembers.AddOrUpdate(groupName, new HashSet<string> { Context.ConnectionId }, (_, existingValue) =>
+        GroupMembers.AddOrUpdate(
+            groupName, 
+            new HashSet<Tuple<string, string>> {new (Context.ConnectionId, playerId)}, 
+            (_, existingValue) =>
         {
-            existingValue.Add(Context.ConnectionId);
+            existingValue.Add(new Tuple<string, string>(Context.ConnectionId, playerId));
             return existingValue;
         });
     }
@@ -32,7 +35,7 @@ public class GameHub : Hub
         // Supprimer le membre du groupe dans la collection
         if (GroupMembers.TryGetValue(groupName, out var members))
         {
-            members.Remove(Context.ConnectionId);
+            members.RemoveWhere(x => x.Item1 == Context.ConnectionId);
         }
     }
 }

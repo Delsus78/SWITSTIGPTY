@@ -7,7 +7,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 
-const { placeholder, isErrored } = defineProps({
+const { placeholder, isErrored, defaultValue } = defineProps({
     placeholder: {
         type: String,
         required: true
@@ -16,12 +16,17 @@ const { placeholder, isErrored } = defineProps({
         type: Boolean,
         required: false,
         default: false
+    },
+    defaultValue: {
+        type: String,
+        required: false,
+        default: ''
     }
 });
 
 const emit = defineEmits(["value-changed"]);
 
-const value = ref('');
+const value = ref(defaultValue);
 
 watch(value, (newValue) => {
     emit('value-changed', newValue);

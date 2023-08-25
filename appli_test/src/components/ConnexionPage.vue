@@ -13,7 +13,7 @@ import PseudoIcon from "@/components/icons/IconPseudo.vue";
 const gameCode = ref('');
 const type = ref('all');
 const genre = ref('rap');
-const pseudo = ref('');
+const pseudo = ref(localStorage.getItem('pseudo') || '');
 const isErrored = ref(false);
 const emit = defineEmits(["code-retrieved","game-created"]);
 
@@ -23,6 +23,10 @@ const getAllGenres = async () => {
     const response = await axios.get(config.apiUrl + "Game/allgenres");
     let res = response.data.map(genre => ({value: genre, label: genre}));
     return res;
+}
+
+const savePseudo = () =>  {
+    localStorage.setItem('pseudo', pseudo.value);
 }
 
 onMounted(async () => {
@@ -50,7 +54,7 @@ const handleCodeRetrieved = () => {
         isErrored.value = true;
         return;
     }
-
+    savePseudo();
     emit('code-retrieved', gameCode.value, pseudo.value);
 }
 
@@ -59,7 +63,7 @@ const handleGameCreation = () => {
         isErrored.value = true;
         return;
     }
-
+    savePseudo();
     emit('game-created', {type: type.value, genre: genre.value}, pseudo.value);
 }
 
@@ -72,7 +76,7 @@ const handleGameCreation = () => {
         </template>
         <template #heading>Super pseudo</template>
 
-        <TextBox placeholder="PSEUDO" @value-changed="handlePseudoValueChanged" :is-errored="isErrored"/>
+        <TextBox :default-value="pseudo" placeholder="PSEUDO" @value-changed="handlePseudoValueChanged" :is-errored="isErrored"/>
     </WelcomeItem>
     <WelcomeItem>
         <template #icon>
@@ -89,9 +93,9 @@ const handleGameCreation = () => {
         </template>
         <template #heading>Create a Game</template>
 
-        <ValidationButton msg="Create" @onClick="handleGameCreation"/>
         <Dropdown default-option='all' :options="[{ value: 'all', label: 'All' }, { value: 'top-all-time', label: 'Top All Time' }, { value: 'genre', label: 'Genre' }]" @value-changed="handleTypeValueChanged" />
         <Dropdown v-if="type === 'genre'" default-option='rap' :options="allGenres" :searchable="true" @value-changed="handleGenreValueChanged" />
+        <ValidationButton msg="Create" @onClick="handleGameCreation"/>
 
     </WelcomeItem>
 </template>
