@@ -47,7 +47,6 @@ const handleVote = async (playerIdToVote) => {
         const url = config.apiUrl + "Game/"+ gameCode.value + "/"+ playerId.value + "/vote/" + playerIdToVote;
         await axios.post(url);
 
-        console.log("Player "+ playerId.value +" is voting for player "+ playerIdToVote);
     } catch (error) {
         console.error('Erreur lors de l\'appel API:', error);
     }

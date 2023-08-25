@@ -47,25 +47,21 @@ connection.start().catch(err => console.error(err.toString())).then(() => {
 
 const handleLeave = async () => {
     connection.invoke("LeaveGroup", gameCode.value).catch(err => console.error(err.toString())).then(() => {
-        console.log("Left group");
     }).finally(() => emit('leave', gamePhase.value));
 }
 
 connection.on("start-game", (message) => {
     selectedYoutubeUrl.value = youtubeUrls.value[message.indexOfSong];
     assignPlayers(message.players);
-    console.log(selectedYoutubeUrl.value);
     setGamePhase("started");
 });
 
 connection.on("game-ended", (playersReceived) => {
     assignPlayers(playersReceived);
-    console.log(players?.value);
     setGamePhase("result");
 });
 
 connection.on("new-vote", (votingPlayerId) => {
-    console.log(votingPlayerId);
     store.dispatch('setHasVoted', votingPlayerId);
 });
 
@@ -81,7 +77,6 @@ const assignPlayers = (players) => {
         player.hasVoted = false;
     });
     store.dispatch('assignPlayers', players);
-    console.log(players);
 }
 
 const handleStartGame = () => {

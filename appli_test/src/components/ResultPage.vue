@@ -34,8 +34,6 @@ onMounted(() => {
             player.isVisible = true;
         }, index * 500);
     });
-
-    console.log(sortedPlayers.value);
 });
 
 </script>

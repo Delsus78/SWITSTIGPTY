@@ -86,7 +86,8 @@ public class GameService
             Id = playerId,
             Name = playerName,
             VotersNames = new HashSet<string>(),
-            ImageUrl = "https://www.cc-cln.fr/build/images/huchet/pictos/icon-user.png"
+            ImageUrl = "https://www.cc-cln.fr/build/images/huchet/pictos/icon-user.png",
+            IsImpostor = false
         });
         
         await _gameHubService.NotifyNewPlayerNumber(gameCode, game.PlayerCount.ToString());
@@ -269,7 +270,11 @@ public class GameService
         
         // populate songUrl for impostors
         var impostors = game.Players.OrderBy(x => rand.Next()).Take(nbImpostors).ToList();
-        impostors.ForEach(i => i.SongUrl = game.SongsUrls[otherSongNumber]);
+        impostors.ForEach(i =>
+        {
+            i.SongUrl = game.SongsUrls[otherSongNumber];
+            i.IsImpostor = true;
+        });
         
         // populate songUrl for others
         var others = game.Players.Where(p => !impostors.Contains(p)).ToList();

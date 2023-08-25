@@ -13,7 +13,7 @@ import PseudoIcon from "@/components/icons/IconPseudo.vue";
 const gameCode = ref('');
 const type = ref('all');
 const genre = ref('rap');
-const pseudo = ref('');
+const pseudo = ref(localStorage.getItem('pseudo') || '');
 const isErrored = ref(false);
 const emit = defineEmits(["code-retrieved","game-created"]);
 
@@ -31,11 +31,6 @@ const savePseudo = () =>  {
 
 onMounted(async () => {
     allGenres.value = await getAllGenres();
-
-    const savedPseudo = localStorage.getItem('pseudo');
-    if (savedPseudo) {
-        pseudo.value = savedPseudo;
-    }
 });
 
 const handleCodeValueChanged = (newValue) => {
@@ -81,7 +76,7 @@ const handleGameCreation = () => {
         </template>
         <template #heading>Super pseudo</template>
 
-        <TextBox placeholder="PSEUDO" @value-changed="handlePseudoValueChanged" :is-errored="isErrored"/>
+        <TextBox :default-value="pseudo" placeholder="PSEUDO" @value-changed="handlePseudoValueChanged" :is-errored="isErrored"/>
     </WelcomeItem>
     <WelcomeItem>
         <template #icon>

@@ -8,4 +8,5 @@ public class Player : MongoBaseModel
     public HashSet<string> VotersNames { get; set; }
     public string ImageUrl { get; set; }
     public string SongUrl { get; set; }
+    public bool IsImpostor { get; set; }
 }
