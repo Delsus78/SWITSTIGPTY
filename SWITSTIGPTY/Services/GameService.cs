@@ -51,7 +51,7 @@ public class GameService
         return finalString;
     }
 
-    public async Task<Game> CreateGame(string type, string? genre)
+    public async Task<Game> CreateGame(string type, string? genre, int numberOfManches, int pointsPerRightVote = 2, int pointsPerVoteFooled = 1)
     {
         var gameCode = GenerateId();
         
@@ -59,7 +59,11 @@ public class GameService
         {
             GameCode = gameCode,
             SongsUrls = new List<string>(),
-            Players = new List<Player>()
+            Players = new List<Player>(),
+            NumberOfManches = numberOfManches,
+            CurrentManche = 0,
+            PointPerRightVote = pointsPerRightVote,
+            PointPerVoteFooled = pointsPerVoteFooled
         };
         
         // generate songs
@@ -302,5 +306,20 @@ public class GameService
         player.VotersNames.Add(votant.Name);
         
         await _gameHubService.NotifyNewVote(gameCode, votantId);
+    }
+
+    public async Task NextManche(string gameCode)
+    {
+        var game = await GetGame(gameCode);
+        
+        game.CurrentManche++;
+        
+        if (game.CurrentManche == game.NumberOfManches)
+        {
+            await EndGame(gameCode);
+            return;
+        }
+        
+        await StartGame(gameCode);
     }
 }
