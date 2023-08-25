@@ -23,6 +23,7 @@ jobs:
       
     - name: Install dependencies and build
       run: |
+        cd appli_test
         npm ci
         npm run build
 
