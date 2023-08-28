@@ -7,20 +7,21 @@ import { useStore } from "vuex";
 import GamePage from "@/components/GamePage.vue";  // Ajouté pour accéder au store
 import axios from 'axios';
 import config from '@/config.js';
+import GameInfo from "@/components/GameInfo.vue";
 
 const store = useStore();
-const gameCode = computed(() => store.state.gameCode);
-const playerId = computed(() => store.state.playerId);
-const isOwner = ref(false);
+const game = computed(() => store.state.game);
+const player = computed(() => store.state.player);
 
 const handleCodeRetrieved = async (code, playerName) => {
     // join game
     try {
+        code = code.toUpperCase();
         const response = await axios.post(config.apiUrl + "Game/" + code + "/join?playerName=" + playerName);
 
         if (response.status === 200) {
-            isOwner.value = false;
-            assignGameStoreAtJoining(response.data);
+            await store.dispatch('setPlayerIsOwner', false);
+            await assignGameStoreAtJoining(response.data);
         }
     } catch (error) {
         console.error('Erreur lors de l\'appel API:', error);
@@ -29,14 +30,18 @@ const handleCodeRetrieved = async (code, playerName) => {
 
 const handleGameCreated = async (gameParams, playerName) => {
     try {
-        const url = config.apiUrl + "Game?type=" + gameParams.type + (gameParams.type === "genre" ? ("&genre=" + gameParams.genre) : "");
+        const url = `${config.apiUrl}Game?type=${gameParams.type}${(gameParams.type === "genre" ? ("&genre=" + gameParams.genre) : "")}&numberOfManches=${gameParams.numberOfManches}&pointsPerRightVote=${gameParams.pointsPerRightVote}&pointsPerVoteFooled=${gameParams.pointsPerVoteFooled}`;
         const gameInfo = await axios.get(url);
 
         //join it
         const response = await axios.post(config.apiUrl + "Game/" + gameInfo.data.gameCode + "/join?playerName=" + playerName);
 
-        isOwner.value = true;
-        assignGameStoreAtJoining(response.data);
+        await store.dispatch('setPlayerIsOwner', true);
+
+        await assignGameStoreAtJoining(response.data);
+
+        // set player as owner
+        await assignPlayerIsOwner(true);
     } catch (error) {
         console.error('Erreur lors de l\'appel API:', error);
     }
@@ -44,7 +49,7 @@ const handleGameCreated = async (gameParams, playerName) => {
 
 const handleVote = async (playerIdToVote) => {
     try {
-        const url = config.apiUrl + "Game/"+ gameCode.value + "/"+ playerId.value + "/vote/" + playerIdToVote;
+        const url = config.apiUrl + "Game/"+ game.value.gameCode + "/"+ player.value.id + "/vote/" + playerIdToVote;
         await axios.post(url);
 
     } catch (error) {
@@ -53,70 +58,103 @@ const handleVote = async (playerIdToVote) => {
 }
 
 const handleLeaveGame = async (gamePhase) => {
+    console.log(gamePhase);
     try {
-        if (gamePhase !== "result")
-          await axios.post(config.apiUrl + "Game/" + gameCode.value + "/leave");
+        if (gamePhase !== "end-result") {
+            await axios.post(config.apiUrl + "Game/" + game.value.gameCode + "/leave?playerId=" + player.value.id);
 
-        console.log("Player is leaving the game "+ gameCode.value);
+            if (player.value.isOwner) {
+                await handleEndGame();
+            }
+        }
+
+        console.log("Player is leaving the game : "+ game.value.gameCode);
     } catch (error) {
         console.error('Erreur lors de l\'appel API:', error);
     } finally {
-        isOwner.value = false;
-        resetAll();
+        await store.dispatch('resetAll');
     }
 }
 
 const handleEndGame = async () => {
     try {
-        if (isOwner.value) {
-            await axios.post(config.apiUrl + "Game/" + gameCode.value + "/end");
+        if (player.value.isOwner) {
+            await axios.post(config.apiUrl + "Game/" + game.value.gameCode + "/end");
 
-            console.log("Owner is ending the game "+ gameCode.value);
+            console.log("Owner is ending the game : "+ game.value.gameCode);
         }
     } catch (error) {
         console.error('Erreur lors de l\'appel API:', error);
     }
 }
 
-const handleStartGame = async () => {
+const handleNextRound = async () => {
     try {
-        if (isOwner.value) {
-            await axios.post(config.apiUrl + "Game/" + gameCode.value + "/start");
+        if (player.value.isOwner) {
+            await axios.post(config.apiUrl + "Game/" + game.value.gameCode + "/next");
 
-            console.log("Owner is starting the game "+ gameCode.value);
+            console.log("Next Round of game : "+ game.value.gameCode);
         }
     } catch (error) {
         console.error('Erreur lors de l\'appel API:', error);
     }
 }
 
-const assignGameStoreAtJoining = (gameSettings) => {
-    store.dispatch('assignGameCode', gameSettings.gameCode);
-    store.dispatch('assignPlayerNumber', gameSettings.playerCount);
-    store.dispatch('assignYoutubeUrls', gameSettings.songsUrls);
-    store.dispatch('assignPlayerId', gameSettings.playerId);
+const handleEndRound = async () => {
+    try {
+        console.log(game.value);
+        if (player.value.isOwner) {
+            await axios.post(config.apiUrl + "Game/" + game.value.gameCode + "/results");
+
+            console.log("End Round of game : "+ game.value.gameCode);
+        }
+    } catch (error) {
+        console.error('Erreur lors de l\'appel API:', error);
+    }
 }
 
-const resetAll = () => {
-    store.dispatch('resetAll');
+const assignGameStoreAtJoining = async (joinGameDTO) => {
+    console.log(joinGameDTO);
+    await store.dispatch('setGame', joinGameDTO.game);
+    await store.dispatch('setPlayer', joinGameDTO.player);
 }
+
+const assignPlayerIsOwner = async (isOwner) => {
+    await store.dispatch('setPlayerIsOwner', isOwner);
+}
+
 </script>
-
 <template>
   <header>
-    <Logo class="logo" />
-
-    <div class="wrapper">
-      <HelloWorld msg="SWITSTIGPTY" />
+    <div class="right-main">
+      <Logo class="logo"/>
+      <div class="wrapper">
+          <HelloWorld msg="SWITSTIGPTY"/>
+      </div>
     </div>
+    <GameInfo v-if="game.gameCode" :game="game"/>
   </header>
 
   <main>
-    <ConnexionPage v-if="gameCode == null"
+    <ConnexionPage v-if="game.gameCode == null"
        @code-retrieved="handleCodeRetrieved"
        @game-created="handleGameCreated"/>
-    <GamePage v-else @leave="handleLeaveGame" @endGame="handleEndGame" @start="handleStartGame" :is-owner="isOwner" @vote="handleVote"/>
+    <GamePage v-else
+              @leave="handleLeaveGame"
+              @end-round="handleEndRound"
+              @next-round="handleNextRound"
+              @vote="handleVote"/>
   </main>
+
+  <footer>
+      <span v-if="game.gameCode" @click="handleEndGame" class="stop-button">
+          Stop
+      </span>
+      <span v-else class="footer-text">
+          © 2021 - SWITSTIGPTY v0.3.0 - All rights reserved to Team UNC
+      </span>
+
+  </footer>
 </template>
 
 <style scoped>
@@ -132,11 +170,51 @@ header {
   height: 125px;
 }
 
+.stop-button {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--vt-c-black-soft);
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    transition: 0.1s;
+    z-index: 1000; /* Pour s'assurer qu'il est au-dessus des autres éléments */
+}
+
+.footer-text {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--vt-c-black-soft);
+    margin-top: 10rem;
+    bottom: 0;
+    left: 10px;
+    transition: 0.1s;
+    z-index: 1000;
+}
+
+.footer-text:hover {
+    text-shadow: 0px 0px 5px var(--vt-c-green-1);
+}
+
+.stop-button:hover {
+    text-shadow: 0px 0px 5px var(--vt-c-red-1);
+}
+
 @media (min-width: 1024px) {
   header {
     display: flex;
     place-items: center;
+    flex-direction: column;
     padding-right: calc(var(--section-gap) / 2);
+  }
+
+  .right-main {
+      display: flex;
+      place-items: center;
+      padding-right: calc(var(--section-gap) / 2);
   }
 
   .logo {
@@ -148,6 +226,18 @@ header {
     display: flex;
     place-items: flex-start;
     flex-wrap: wrap;
+  }
+
+  .footer-text {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--vt-c-black-soft);
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      padding: 10px 20px;
+      transition: 0.1s;
+      z-index: 1000;
   }
 }
 </style>
