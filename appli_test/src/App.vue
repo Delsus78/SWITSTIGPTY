@@ -7,6 +7,7 @@ import { useStore } from "vuex";
 import GamePage from "@/components/GamePage.vue";  // Ajouté pour accéder au store
 import axios from 'axios';
 import config from '@/config.js';
+import GameInfo from "@/components/GameInfo.vue";
 
 const store = useStore();
 const game = computed(() => store.state.game);
@@ -15,6 +16,7 @@ const player = computed(() => store.state.player);
 const handleCodeRetrieved = async (code, playerName) => {
     // join game
     try {
+        code = code.toUpperCase();
         const response = await axios.post(config.apiUrl + "Game/" + code + "/join?playerName=" + playerName);
 
         if (response.status === 200) {
@@ -26,16 +28,20 @@ const handleCodeRetrieved = async (code, playerName) => {
     }
 }
 
-const handleGameCreated = async (gameParams, playerName, numberOfManches = 1, pointsPerRightVote = 1, pointsPerVoteFooled = 2) => {
+const handleGameCreated = async (gameParams, playerName) => {
     try {
-        const url = `${config.apiUrl}Game?type=${gameParams.type}${(gameParams.type === "genre" ? ("&genre=" + gameParams.genre) : "")}&numberOfManches=${numberOfManches}&pointsPerRightVote=${pointsPerRightVote}&pointsPerVoteFooled=${pointsPerVoteFooled}`;
+        const url = `${config.apiUrl}Game?type=${gameParams.type}${(gameParams.type === "genre" ? ("&genre=" + gameParams.genre) : "")}&numberOfManches=${gameParams.numberOfManches}&pointsPerRightVote=${gameParams.pointsPerRightVote}&pointsPerVoteFooled=${gameParams.pointsPerVoteFooled}`;
         const gameInfo = await axios.get(url);
 
         //join it
         const response = await axios.post(config.apiUrl + "Game/" + gameInfo.data.gameCode + "/join?playerName=" + playerName);
 
         await store.dispatch('setPlayerIsOwner', true);
+
         await assignGameStoreAtJoining(response.data);
+
+        // set player as owner
+        await assignPlayerIsOwner(true);
     } catch (error) {
         console.error('Erreur lors de l\'appel API:', error);
     }
@@ -52,11 +58,17 @@ const handleVote = async (playerIdToVote) => {
 }
 
 const handleLeaveGame = async (gamePhase) => {
+    console.log(gamePhase);
     try {
-        if (gamePhase !== "result")
-          await axios.post(config.apiUrl + "Game/" + game.value.gameCode + "/leave");
+        if (gamePhase !== "end-result") {
+            await axios.post(config.apiUrl + "Game/" + game.value.gameCode + "/leave?playerId=" + player.value.id);
 
-        console.log("Player is leaving the game "+ game.value.gameCode);
+            if (player.value.isOwner) {
+                await handleEndGame();
+            }
+        }
+
+        console.log("Player is leaving the game : "+ game.value.gameCode);
     } catch (error) {
         console.error('Erreur lors de l\'appel API:', error);
     } finally {
@@ -69,7 +81,7 @@ const handleEndGame = async () => {
         if (player.value.isOwner) {
             await axios.post(config.apiUrl + "Game/" + game.value.gameCode + "/end");
 
-            console.log("Owner is ending the game "+ game.value.gameCode);
+            console.log("Owner is ending the game : "+ game.value.gameCode);
         }
     } catch (error) {
         console.error('Erreur lors de l\'appel API:', error);
@@ -88,20 +100,39 @@ const handleNextRound = async () => {
     }
 }
 
+const handleEndRound = async () => {
+    try {
+        console.log(game.value);
+        if (player.value.isOwner) {
+            await axios.post(config.apiUrl + "Game/" + game.value.gameCode + "/results");
+
+            console.log("End Round of game : "+ game.value.gameCode);
+        }
+    } catch (error) {
+        console.error('Erreur lors de l\'appel API:', error);
+    }
+}
+
 const assignGameStoreAtJoining = async (joinGameDTO) => {
+    console.log(joinGameDTO);
     await store.dispatch('setGame', joinGameDTO.game);
     await store.dispatch('setPlayer', joinGameDTO.player);
 }
 
-</script>
+const assignPlayerIsOwner = async (isOwner) => {
+    await store.dispatch('setPlayerIsOwner', isOwner);
+}
 
+</script>
 <template>
   <header>
-    <Logo class="logo" />
-
-    <div class="wrapper">
-      <HelloWorld msg="SWITSTIGPTY" />
+    <div class="right-main">
+      <Logo class="logo"/>
+      <div class="wrapper">
+          <HelloWorld msg="SWITSTIGPTY"/>
+      </div>
     </div>
+    <GameInfo v-if="game.gameCode" :game="game"/>
   </header>
 
   <main>
@@ -110,11 +141,20 @@ const assignGameStoreAtJoining = async (joinGameDTO) => {
        @game-created="handleGameCreated"/>
     <GamePage v-else
               @leave="handleLeaveGame"
-              @end-game="handleEndGame"
+              @end-round="handleEndRound"
               @next-round="handleNextRound"
-              @start="handleNextRound"
               @vote="handleVote"/>
   </main>
+
+  <footer>
+      <span v-if="game.gameCode" @click="handleEndGame" class="stop-button">
+          Stop
+      </span>
+      <span v-else class="footer-text">
+          © 2021 - SWITSTIGPTY v0.3.0 - All rights reserved to Team UNC
+      </span>
+
+  </footer>
 </template>
 
 <style scoped>
@@ -130,11 +170,51 @@ header {
   height: 125px;
 }
 
+.stop-button {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--vt-c-black-soft);
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    transition: 0.1s;
+    z-index: 1000; /* Pour s'assurer qu'il est au-dessus des autres éléments */
+}
+
+.footer-text {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--vt-c-black-soft);
+    margin-top: 10rem;
+    bottom: 0;
+    left: 10px;
+    transition: 0.1s;
+    z-index: 1000;
+}
+
+.footer-text:hover {
+    text-shadow: 0px 0px 5px var(--vt-c-green-1);
+}
+
+.stop-button:hover {
+    text-shadow: 0px 0px 5px var(--vt-c-red-1);
+}
+
 @media (min-width: 1024px) {
   header {
     display: flex;
     place-items: center;
+    flex-direction: column;
     padding-right: calc(var(--section-gap) / 2);
+  }
+
+  .right-main {
+      display: flex;
+      place-items: center;
+      padding-right: calc(var(--section-gap) / 2);
   }
 
   .logo {
@@ -146,6 +226,18 @@ header {
     display: flex;
     place-items: flex-start;
     flex-wrap: wrap;
+  }
+
+  .footer-text {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--vt-c-black-soft);
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      padding: 10px 20px;
+      transition: 0.1s;
+      z-index: 1000;
   }
 }
 </style>

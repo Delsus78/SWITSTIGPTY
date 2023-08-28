@@ -107,7 +107,9 @@ public class GameService
             throw new Exception("Game not found");
         
         game.Players.RemoveAll(p => p.Id == playerId);
-
+        
+        await _gameHubService.LeaveGroup(gameCode, playerId);
+        
         await _gameHubService.NotifyNewPlayerNumber(gameCode, game.PlayerCount.ToString());
     }
 
@@ -244,7 +246,7 @@ public class GameService
     {
         var game = await GetGame(gameCode);
         
-        _gameHubService.NotifyGameEnded(gameCode, game.Players);
+        await _gameHubService.NotifyGameEnded(gameCode, game.Players);
         
         
         _games.RemoveAll(g => g.GameCode == gameCode);
@@ -328,6 +330,13 @@ public class GameService
             return;
         }
         
-        await RandomizeAndNotifyImpostors(game, "new-round", nbImpostors);
+        await RandomizeAndNotifyImpostors(game, "next-round", nbImpostors);
+    }
+
+    public async Task EndRound(string gameCode)
+    {
+        var game = await GetGame(gameCode);
+        
+        await _gameHubService.NotifyEndRound(gameCode, game.Players);
     }
 }

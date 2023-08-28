@@ -1,13 +1,13 @@
 <template>
     <div :class="{ 'text-box': true, 'errored': isErrored }">
-        <input type="text" v-model="value" :placeholder="placeholder" />
+        <input :type="inputType" v-model="value" :placeholder="placeholder" @input="handleInput" />
     </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import {computed, ref, watch} from 'vue';
 
-const { placeholder, isErrored, defaultValue } = defineProps({
+const { placeholder, isErrored, defaultValue, isNumberOnly } = defineProps({
     placeholder: {
         type: String,
         required: true
@@ -18,25 +18,37 @@ const { placeholder, isErrored, defaultValue } = defineProps({
         default: false
     },
     defaultValue: {
-        type: String,
+        type: [String, Number],
         required: false,
         default: ''
+    },
+    isNumberOnly: {
+        type: Boolean,
+        required: false,
+        default: false
     }
 });
 
 const emit = defineEmits(["value-changed"]);
-
+const inputType = computed(() => (isNumberOnly ? 'number' : 'text'));
 const value = ref(defaultValue);
 
 watch(value, (newValue) => {
     emit('value-changed', newValue);
 });
+
+const handleInput = (event) => {
+    if (isNumberOnly && /[^0-9]/.test(event.target.value)) {
+        event.target.value = event.target.value.replace(/[^0-9]/g, '');
+        value.value = event.target.value;
+    }
+};
 </script>
 
 <style scoped>
 .text-box {
     position: relative;
-    margin-top: 1rem;
+    margin-bottom: 1rem;
     border: 1px solid var(--color-border);
     border-radius: 4px;
     cursor: pointer;

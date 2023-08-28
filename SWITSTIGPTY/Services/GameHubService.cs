@@ -35,13 +35,27 @@ public class GameHubService
         }
     }
 
-    public void NotifyGameEnded(string groupName, List<Player> players)
+    public async Task NotifyGameEnded(string groupName, List<Player> players)
     {
-        _hubContext.Clients.Group(groupName).SendAsync("game-ended", players);
+        await _hubContext.Clients.Group(groupName).SendAsync("game-ended", players);
     }
     
     public async Task NotifyNewVote(string groupName, string playerId)
     {
         await _hubContext.Clients.Group(groupName).SendAsync("new-vote", playerId);
+    }
+    
+    public async Task NotifyEndRound(string groupeName, List<Player> players)
+    {
+        await _hubContext.Clients.Group(groupeName).SendAsync("end-round", players);
+    }
+    
+    public async Task LeaveGroup(string groupName, string playerId)
+    {
+        // Supprimer le membre du groupe dans la collection
+        if (GameHub.GroupMembers.TryGetValue(groupName, out var members))
+        {
+            members.RemoveWhere(x => x.Item2 == playerId);
+        }
     }
 }

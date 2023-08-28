@@ -5,11 +5,11 @@
             <h2 :class="{'impostor': item?.isImpostor}">{{ item?.name }} {{ item?.isImpostor ? 'IMPOSTOR' : ''}}</h2>
             <div class="voter-bar" :style="{ width: voterPercentage + '%' }"></div>
             <p class="voters">{{ item?.votersNames.join(', ') }}</p>
-            <p class="songUrl" v-if="item?.songUrl">Song URL: <a :href="item?.songUrl">{{ item?.songUrl }}</a></p>
+            <p class="songUrl" v-if="item?.songUrl">Song URL: <a :href="item?.songUrl" target="_blank" rel="noopener noreferrer">{{ item?.songUrl }}</a></p>
+            <p class="score">Score: {{ item?.score }}</p>
         </div>
     </div>
 </template>
-
 <script setup>
 
 import {computed} from "vue";
@@ -21,16 +21,16 @@ const { item } = defineProps({
         required : true
     }
 });
-const allPlayers = computed(() => store.state.players);
+const allPlayers = computed(() => store.state.game.players);
 
 const voterPercentage = computed(() => {
+
     if (item?.votersNames.length === 0) return 0;
-    // Retourne le pourcentage de votes reçus par rapport à une valeur max (à définir selon votre besoin)
+    // Retourne le pourcentage de votes reçus par rapport à une valeur max
     return (item?.votersNames.length / allPlayers?.value.length) * 100;
 });
 
 </script>
-
 <style scoped>
 .player-result {
     display: flex;
