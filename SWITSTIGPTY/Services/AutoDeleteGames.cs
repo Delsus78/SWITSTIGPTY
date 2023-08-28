@@ -29,7 +29,7 @@ public class AutoDeleteGames : IHostedService
         foreach (var game in games)
         {
             await _gameService.EndGame(game.GameCode);
-            _gameHubService.NotifyGameEnded(game.GameCode, game.Players);
+            await _gameHubService.NotifyGameEnded(game.GameCode, game.Players);
         }
         
     }

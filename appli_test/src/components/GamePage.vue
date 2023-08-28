@@ -1,39 +1,23 @@
 <script setup>
-import WelcomeItem from './WelcomeItem.vue';
-import StartIcon from "@/components/icons/IconStart.vue";
-import ValidationButton from "@/components/ValidationButton.vue";
 import {computed, ref} from "vue";
-import OwnerPage from "@/components/OwnerPage.vue";
-import WaitIcon from "@/components/icons/IconWait.vue";
 import store from "@/store";
 import * as signalR from "@microsoft/signalr";
 import config from "@/config";
-import axios from "axios";
-import EmbedYoutube from "@/components/EmbedYoutube.vue";
-import VotePage from "@/components/VotePage.vue";
 import ResultPage from "@/components/ResultPage.vue";
-import PlayerResult from "@/components/PlayerResult.vue";
+import WaitPage from "@/components/WaitPage.vue";
+import InGamePage from "@/components/InGamePage.vue";
+import LoadingPage from "@/components/LoadingPage.vue";
 
 
-const emit = defineEmits(["leave","start","vote","endGame"]);
+const emit = defineEmits(["leave","vote","endRound", "nextRound"]);
 const gamePhase = ref("not-started");
-const gameCode = computed(() => store.state.gameCode);
-const players = computed(() => store.state.players);
-const playerId = computed(() => store.state.playerId);
-const playerNumber = computed(() => store.state.playerNumber);
-const youtubeUrls = computed(() => store.state.youtubeUrls);
+const game = computed(() => store.state.game);
+const player = computed(() => store.state.player);
 const selectedYoutubeUrl = ref("");
 
 const setGamePhase = (newVal) => {
     gamePhase.value = newVal;
 }
-
-const { isOwner } = defineProps({
-    isOwner: {
-        type: Boolean,
-        required: true
-    }
-});
 
 // SIGNALR PART
 const connection = new signalR.HubConnectionBuilder()
@@ -42,23 +26,35 @@ const connection = new signalR.HubConnectionBuilder()
     .build();
 
 connection.start().catch(err => console.error(err.toString())).then(() => {
-    connection.invoke("JoinGroup", gameCode.value, playerId.value).catch(err => console.error(err.toString()));
+    connection.invoke("JoinGroup", game.value.gameCode, player.value.id).catch(err => console.error(err.toString()));
 });
 
 const handleLeave = async () => {
-    connection.invoke("LeaveGroup", gameCode.value).catch(err => console.error(err.toString())).then(() => {
+    connection.invoke("LeaveGroup", game.value.gameCode).catch(err => console.error(err.toString())).then(() => {
     }).finally(() => emit('leave', gamePhase.value));
 }
 
-connection.on("start-game", (message) => {
-    selectedYoutubeUrl.value = youtubeUrls.value[message.indexOfSong];
-    assignPlayers(message.players);
+connection.on("next-round", (message) => {
+    // reset votes
+    message.game.players.forEach(player => {
+        player.hasVoted = false;
+    });
+
+    assignGame(message.game);
+    selectedYoutubeUrl.value = game.value.songsUrls[message.indexOfSong];
+
     setGamePhase("started");
+});
+
+connection.on("end-round", (players) => {
+    console.log(players);
+    assignPlayers(players);
+    setGamePhase("result");
 });
 
 connection.on("game-ended", (playersReceived) => {
     assignPlayers(playersReceived);
-    setGamePhase("result");
+    setGamePhase("end-result");
 });
 
 connection.on("new-vote", (votingPlayerId) => {
@@ -66,83 +62,49 @@ connection.on("new-vote", (votingPlayerId) => {
 });
 
 connection.on("player-number-changed", (message) => {
-    store.dispatch('assignPlayerNumber', message);
+    store.dispatch('setPlayerCount', message);
 });
 
 // END SIGNALR PART
 
+const handleNextRound = async () => {
+    gamePhase.value = "loading";
+    emit('nextRound');
+}
 
 const assignPlayers = (players) => {
-    players.forEach(player => {
-        player.hasVoted = false;
-    });
-    store.dispatch('assignPlayers', players);
+    store.dispatch('setPlayers', players);
 }
 
-const handleStartGame = () => {
-    emit('start');
-}
-
-const handleEndGame = () => {
-    emit('endGame');
-}
-
-const handleVote = (itemId) => {
-    emit('vote', itemId);
+const assignGame = (game) => {
+    store.dispatch('setGame', game);
 }
 
 </script>
-
 <template>
-    <div v-if="gamePhase === 'not-started'">
-        <OwnerPage v-if="isOwner"
-                   @leave="handleLeave" @start="handleStartGame"/>
-        <WelcomeItem v-else>
-            <template #icon>
-                <WaitIcon />
-            </template>
-            <template #heading>Waiting Room</template>
-            <template #playerNumber>
-                <div v-if="playerNumber !== null">
-                    {{playerNumber}} in lobby
-                </div>
-            </template>
-            Waiting for the owner to start the game with code [ {{gameCode}} ]
-            <div></div>
-            <ValidationButton msg="leave" @onClick="handleLeave" color="red"/>
-        </WelcomeItem>
+    <div v-if="gamePhase === 'loading'">
+        <LoadingPage></LoadingPage>
     </div>
+    <div v-else-if="gamePhase === 'not-started'">
+        <WaitPage :game="game" :isOwner="player.isOwner"
+                  @leave="handleLeave" @start="handleNextRound"></WaitPage>
+    </div>
+
     <div v-else-if="gamePhase === 'started'">
-        <WelcomeItem>
-            <template #heading>GAME TIME</template>
-            <template #icon>
-                <StartIcon />
-            </template>
-            <EmbedYoutube :youtube-link="selectedYoutubeUrl"></EmbedYoutube>
-            <ValidationButton v-if="isOwner" msg="STOOOOP" @onClick="handleEndGame" color="red"/>
-
-        </WelcomeItem>
-        <WelcomeItem>
-            <template #heading>Vote</template>
-            <template #icon>
-                <WaitIcon />
-            </template>
-            <VotePage @vote="handleVote" :items="players"></VotePage>
-        </WelcomeItem>
+        <InGamePage :isOwner="player.isOwner" :youtubeUrl="selectedYoutubeUrl" :players="game.players"
+                    @endRound="emit('endRound')" @vote="emit('vote', $event)"></InGamePage>
     </div>
-    <div v-else-if="gamePhase === 'result'">
-        <WelcomeItem>
-            <template #heading>Results</template>
-            <template #icon>
-                <StartIcon />
-            </template>
-            <ResultPage :players="players"></ResultPage>
-            <ValidationButton msg="leave" @onClick="handleLeave" color="red"/>
-        </WelcomeItem>
 
+    <div v-else-if="gamePhase === 'result'">
+        <ResultPage :isOwner="player.isOwner" :players="game.players"
+                    @nextRound="handleNextRound"></ResultPage>
+    </div>
+
+    <div v-else-if="gamePhase === 'end-result'">
+        <ResultPage :isOwner="false" :players="game.players"
+                    isEndScreen @leave="handleLeave"></ResultPage>
     </div>
 </template>
-
 <style scoped>
 
 </style>

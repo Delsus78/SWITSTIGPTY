@@ -51,7 +51,7 @@ public class GameService
         return finalString;
     }
 
-    public async Task<Game> CreateGame(string type, string? genre)
+    public async Task<Game> CreateGame(string type, string? genre, int numberOfManches, int pointsPerRightVote = 2, int pointsPerVoteFooled = 1)
     {
         var gameCode = GenerateId();
         
@@ -59,12 +59,14 @@ public class GameService
         {
             GameCode = gameCode,
             SongsUrls = new List<string>(),
-            Players = new List<Player>()
+            Players = new List<Player>(),
+            NumberOfManches = numberOfManches,
+            CurrentManche = 0,
+            PointPerRightVote = pointsPerRightVote,
+            PointPerVoteFooled = pointsPerVoteFooled,
+            Type = type,
+            Genre = genre
         };
-        
-        // generate songs
-        var songsUrls = await GenerateSongsUrls(type, genre);
-        game.SongsUrls = songsUrls;
 
         // register the game
         _games.Add(game);
@@ -74,30 +76,26 @@ public class GameService
     
     public async Task<JoinGameDTO> JoinGame(string gameCode, string playerName)
     {
-        var game = _games.FirstOrDefault(g => g.GameCode == gameCode);
+        var game = await GetGame(gameCode);
         var playerId = GenerateId();
-        
-        if (game == null)
-            throw new Exception("Game not found");
-
-        
-        game.Players.Add(new Player
+        var player = new Player
         {
             Id = playerId,
             Name = playerName,
             VotersNames = new HashSet<string>(),
             ImageUrl = "https://www.cc-cln.fr/build/images/huchet/pictos/icon-user.png",
-            IsImpostor = false
-        });
+            IsImpostor = false,
+            score = 0
+        };
+
+        game.Players.Add(player);
         
         await _gameHubService.NotifyNewPlayerNumber(gameCode, game.PlayerCount.ToString());
         
         return new JoinGameDTO
         {
-            GameCode = gameCode,
-            SongsUrls = game.SongsUrls,
-            PlayerCount = game.PlayerCount,
-            PlayerId = playerId
+            Game = game,
+            Player = player
         };
     }
     
@@ -109,12 +107,22 @@ public class GameService
             throw new Exception("Game not found");
         
         game.Players.RemoveAll(p => p.Id == playerId);
-
+        
+        await _gameHubService.LeaveGroup(gameCode, playerId);
+        
         await _gameHubService.NotifyNewPlayerNumber(gameCode, game.PlayerCount.ToString());
     }
 
     #region GenerateRandomSongsUrls
     
+    private async Task<string> GetYoutubeUrl(string songName, string artistName)
+    {
+        var url = _randomSongApiUrl + "get-song-video?song=" + songName + "&artist="+ artistName;
+        var result = await ApiUtils.GetAsync(url);
+        
+
+        return "https://youtu.be/" + result.Replace("\"", "");
+    }
     private List<string> GetJsonOfAllGenres()
     {
         var allgenres = File.ReadAllText("all_genres.json");
@@ -222,15 +230,6 @@ public class GameService
         RandomWord
     }
     #endregion
-    
-    private async Task<string> GetYoutubeUrl(string songName, string artistName)
-    {
-        var url = _randomSongApiUrl + "get-song-video?song=" + songName + "&artist="+ artistName;
-        var result = await ApiUtils.GetAsync(url);
-        
-
-        return "https://youtu.be/" + result.Replace("\"", "");
-    }
 
     public async Task<Game> GetGame(string gameCode)
     {
@@ -247,22 +246,18 @@ public class GameService
     {
         var game = await GetGame(gameCode);
         
-        _gameHubService.NotifyGameEnded(gameCode, game.Players);
+        await _gameHubService.NotifyGameEnded(gameCode, game.Players);
         
         
         _games.RemoveAll(g => g.GameCode == gameCode);
     }
 
-    public async Task StartGame(string gameCode, int nbImpostors = 1)
+    private async Task RandomizeAndNotifyImpostors(Game game, string emitCode, int nbImpostors = 1)
     {
-        const string emitName = "start-game";
-        var game = _games.FirstOrDefault(g => g.GameCode == gameCode);
-        if (game == null)
-            throw new Exception("Game not found");
+        // generate songs
+        var songsUrls = await GenerateSongsUrls(game.Type, game.Genre);
+        game.SongsUrls = songsUrls;
         
-        if (game.PlayerCount < nbImpostors + 1)
-            throw new Exception("Not enough players");
-
         // select random main song number and give it to random number of players (impostors)
         var rand = new Random();
         var randomMainSongNumber = rand.Next(1);
@@ -281,26 +276,67 @@ public class GameService
         others.ForEach(o => o.SongUrl = game.SongsUrls[randomMainSongNumber]);
         
         await _gameHubService.SendToGroupExceptListAsync(
-            gameCode, 
-            emitName,
-            new StartingGameDTO {Players = game.Players, IndexOfSong = randomMainSongNumber}, 
-            new StartingGameDTO {Players = game.Players, IndexOfSong = otherSongNumber},
+            game.GameCode, 
+            emitCode,
+            new StartingGameDTO {Game = game, IndexOfSong = randomMainSongNumber}, 
+            new StartingGameDTO {Game = game, IndexOfSong = otherSongNumber},
             impostors.Select(i => i.Id).ToList());
     }
-
+    
     public async Task Vote(string gameCode, string votantId, string voteId)
     {
         var game = await GetGame(gameCode);
         
-        var player = game.Players.FirstOrDefault(p => p.Id == voteId);
+        var votedPlayer = game.Players.FirstOrDefault(p => p.Id == voteId);
         
         var votant = game.Players.FirstOrDefault(p => p.Id == votantId);
         
-        if (player == null || votant == null)
+        if (votedPlayer == null || votant == null)
             throw new Exception("Player not found");
 
-        player.VotersNames.Add(votant.Name);
+        // scoring
+        if (votedPlayer.IsImpostor)
+        {
+            votant.score += game.PointPerRightVote;
+        }
+        else
+        {
+            var impostors = game.Players.Where(p => p.IsImpostor).ToList();
+            impostors.ForEach(i => i.score += game.PointPerVoteFooled);
+        }
+        
+        votedPlayer.VotersNames.Add(votant.Name);
         
         await _gameHubService.NotifyNewVote(gameCode, votantId);
+    }
+
+    public async Task NextRound(string gameCode, int nbImpostors = 1)
+    {
+        var game = await GetGame(gameCode);
+        
+        game.CurrentManche++;
+        
+        // reset players
+        foreach (var gamePlayer in game.Players)
+        {
+            gamePlayer.VotersNames = new HashSet<string>();
+            gamePlayer.SongUrl = "";
+            gamePlayer.IsImpostor = false;
+        }
+        
+        if (game.CurrentManche == game.NumberOfManches + 1)
+        {
+            await EndGame(gameCode);
+            return;
+        }
+        
+        await RandomizeAndNotifyImpostors(game, "next-round", nbImpostors);
+    }
+
+    public async Task EndRound(string gameCode)
+    {
+        var game = await GetGame(gameCode);
+        
+        await _gameHubService.NotifyEndRound(gameCode, game.Players);
     }
 }

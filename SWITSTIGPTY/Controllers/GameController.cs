@@ -31,9 +31,9 @@ public class GameController : ControllerBase
     /// </param>
     /// <returns></returns>
     [HttpGet(Name = "CreateGame")]
-    public async Task<Game> CreateGame(string type, string? genre)
+    public async Task<Game> CreateGame(string type, string? genre, int numberOfManches, int pointsPerRightVote, int pointsPerVoteFooled)
     {
-        return await _gameService.CreateGame(type, genre);
+        return await _gameService.CreateGame(type, genre, numberOfManches, pointsPerRightVote, pointsPerVoteFooled);
     }
     
     [HttpGet("{gameCode}", Name = "GetGame")]
@@ -76,18 +76,26 @@ public class GameController : ControllerBase
         return Ok();
     }
 
-    [HttpPost("{gameCode}/start", Name = "StartGame")]
-    public async Task<ActionResult> StartGame(string gameCode)
-    {
-        await _gameService.StartGame(gameCode);
-        
-        return Ok();
-    }
-    
     [HttpPost("{gameCode}/end", Name = "EndGame")]
     public async Task<ActionResult> EndGame(string gameCode)
     {
         await _gameService.EndGame(gameCode);
+        
+        return Ok();
+    }
+    
+    [HttpPost("{gameCode}/next", Name = "NextManche")]
+    public async Task<ActionResult> NextManche(string gameCode)
+    {
+        await _gameService.NextRound(gameCode);
+        
+        return Ok();
+    }
+    
+    [HttpPost("{gameCode}/results", Name = "EndRound")]
+    public async Task<ActionResult> EndRound(string gameCode)
+    {
+        await _gameService.EndRound(gameCode);
         
         return Ok();
     }
