@@ -41,6 +41,7 @@ jobs:
         DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
       run: |
         echo "$DEPLOY_KEY" > deploy_key
+        echo "$DEPLOY_KEY"
         chmod 600 deploy_key
         ssh -i deploy_key -o StrictHostKeyChecking=no -p 19452 deploy@146.59.158.8 "sudo systemctl restart switstigpty.service"
         rm -f deploy_key
