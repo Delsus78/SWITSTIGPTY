@@ -47,7 +47,6 @@ connection.on("next-round", (message) => {
 });
 
 connection.on("end-round", (players) => {
-    console.log(players);
     assignPlayers(players);
     setGamePhase("result");
 });

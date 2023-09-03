@@ -58,7 +58,6 @@ const handleVote = async (playerIdToVote) => {
 }
 
 const handleLeaveGame = async (gamePhase) => {
-    console.log(gamePhase);
     try {
         if (gamePhase !== "end-result") {
             await axios.post(config.apiUrl + "Game/" + game.value.gameCode + "/leave?playerId=" + player.value.id);
@@ -102,7 +101,6 @@ const handleNextRound = async () => {
 
 const handleEndRound = async () => {
     try {
-        console.log(game.value);
         if (player.value.isOwner) {
             await axios.post(config.apiUrl + "Game/" + game.value.gameCode + "/results");
 
@@ -114,7 +112,6 @@ const handleEndRound = async () => {
 }
 
 const assignGameStoreAtJoining = async (joinGameDTO) => {
-    console.log(joinGameDTO);
     await store.dispatch('setGame', joinGameDTO.game);
     await store.dispatch('setPlayer', joinGameDTO.player);
 }
@@ -151,7 +148,7 @@ const assignPlayerIsOwner = async (isOwner) => {
           Stop
       </span>
       <span v-else class="footer-text">
-          © 2021 - SWITSTIGPTY v0.3.0 - All rights reserved to Team UNC
+          © 2021 - SWITSTIGPTY v0.3.1 - All rights reserved to Team UNC
       </span>
 
   </footer>
