@@ -11,6 +11,7 @@ public static class ApiUtils
         // Initialisez ici si vous voulez définir des en-têtes par défaut, des délais d'attente, etc.
         client.DefaultRequestHeaders.Accept.Clear();
         client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        client.DefaultRequestHeaders.Add("Referer", "https://www.chosic.com/random-songs-generator-with-links-to-spotify-and-youtube/");
     }
 
     public static async Task<string> GetAsync(string uri)
