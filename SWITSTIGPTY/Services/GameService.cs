@@ -73,6 +73,17 @@ public class GameService
         
         return game;
     }
+
+    public async Task<JoinGameDTO> ReconnectGame(string gameCode, string playerId)
+    {
+        var game = await GetGame(gameCode);
+        var player = game.Players.FirstOrDefault(p => p.Id == playerId);
+        
+        if (player == null)
+            throw new Exception("Player not found");
+        
+        return new JoinGameDTO {Game = game, Player = player};
+    }
     
     public async Task<JoinGameDTO> JoinGame(string gameCode, string playerName)
     {
@@ -245,7 +256,8 @@ public class GameService
     public async Task EndGame(string gameCode)
     {
         var game = await GetGame(gameCode);
-        
+        game.GamePhase = "end-result";
+         
         await _gameHubService.NotifyGameEnded(gameCode, game.Players);
         
         
@@ -295,17 +307,19 @@ public class GameService
             throw new Exception("Player not found");
 
         // scoring
-        if (votedPlayer.IsImpostor)
+        if (!votant.IsImpostor)
         {
-            votant.score += game.PointPerRightVote;
+            if (votedPlayer.IsImpostor)
+            {
+                votant.score += game.PointPerRightVote;
+            }
+            else
+            {
+                var impostors = game.Players.Where(p => p.IsImpostor).ToList();
+                impostors.ForEach(i => i.score += game.PointPerVoteFooled);
+            }
+            votedPlayer.VotersNames.Add(votant.Name);
         }
-        else
-        {
-            var impostors = game.Players.Where(p => p.IsImpostor).ToList();
-            impostors.ForEach(i => i.score += game.PointPerVoteFooled);
-        }
-        
-        votedPlayer.VotersNames.Add(votant.Name);
         
         await _gameHubService.NotifyNewVote(gameCode, votantId);
     }
@@ -330,12 +344,15 @@ public class GameService
             return;
         }
         
+        game.GamePhase = "started";
+        
         await RandomizeAndNotifyImpostors(game, "next-round", nbImpostors);
     }
 
     public async Task EndRound(string gameCode)
     {
         var game = await GetGame(gameCode);
+        game.GamePhase = "result";
         
         await _gameHubService.NotifyEndRound(gameCode, game.Players);
     }
