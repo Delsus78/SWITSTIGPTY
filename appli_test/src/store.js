@@ -11,6 +11,7 @@ export default createStore({
             currentManche: 0,
             pointPerRightVote: 0,
             pointPerVoteFooled: 0,
+            gamePhase: "",
             genre: "",
             type: ""
         },
@@ -55,6 +56,9 @@ export default createStore({
         setGenre(state, genre) {
             state.game.genre = genre;
         },
+        setGamePhase(state, phase) {
+            state.game.gamePhase = phase;
+        },
         setType(state, type) {
             state.game.type = type;
         },
@@ -94,6 +98,7 @@ export default createStore({
                 currentManche: 0,
                 pointPerRightVote: 0,
                 pointPerVoteFooled: 0,
+                gamePhase: "",
                 genre: "",
                 type: ""
             };
@@ -120,6 +125,9 @@ export default createStore({
         },
         setGameCode({ commit }, code) {
             commit('setGameCode', code);
+        },
+        setGamePhase({ commit }, phase) {
+            commit('setGamePhase', phase);
         },
         setPlayerCount({ commit }, count) {
             commit('setPlayerCount', count);

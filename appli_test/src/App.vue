@@ -2,7 +2,7 @@
 import HelloWorld from './components/HelloWorld.vue'
 import ConnexionPage from './components/ConnexionPage.vue'
 import Logo from "@/components/icons/Logo.vue";
-import {computed, ref} from "vue";
+import { computed } from "vue";
 import { useStore } from "vuex";
 import GamePage from "@/components/GamePage.vue";  // Ajouté pour accéder au store
 import axios from 'axios';
@@ -14,6 +14,24 @@ const game = computed(() => store.state.game);
 const player = computed(() => store.state.player);
 
 const handleCodeRetrieved = async (code, playerName) => {
+
+    // si playerId dans le local storage est présent, on demande si on veut tenter de se reco
+    if (localStorage.getItem('gamePlayerId') !== null) {
+        if (confirm("You were in a game, do you want to reconnect ?")) {
+            // reconnect to game
+            try {
+                const response = await axios.post(config.apiUrl + "Game/" + code + "/reconnect?playerId=" + localStorage.getItem('gamePlayerId'));
+
+                if (response.status === 200) {
+                    await assignGameStoreAtJoining(response.data);
+                }
+            } catch (error) {
+                console.error('Erreur lors de l\'appel API:', error);
+            }
+            return;
+        }
+    }
+
     // join game
     try {
         code = code.toUpperCase();
@@ -72,6 +90,9 @@ const handleLeaveGame = async (gamePhase) => {
         console.error('Erreur lors de l\'appel API:', error);
     } finally {
         await store.dispatch('resetAll');
+
+        // reset playerId in local storage
+        localStorage.removeItem('gamePlayerId');
     }
 }
 
@@ -114,6 +135,9 @@ const handleEndRound = async () => {
 const assignGameStoreAtJoining = async (joinGameDTO) => {
     await store.dispatch('setGame', joinGameDTO.game);
     await store.dispatch('setPlayer', joinGameDTO.player);
+
+    // save game player id in local storage in case of reconnection needed
+    localStorage.setItem('gamePlayerId', joinGameDTO.player.id);
 }
 
 const assignPlayerIsOwner = async (isOwner) => {

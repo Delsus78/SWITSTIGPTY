@@ -60,6 +60,12 @@ public class GameController : ControllerBase
         return await _gameService.JoinGame(gameCode, playerName);
     }
     
+    [HttpPost("{gameCode}/reconnect", Name = "Reconnect")]
+    public async Task<JoinGameDTO> Reconnect(string gameCode, string playerId)
+    {
+        return await _gameService.ReconnectGame(gameCode, playerId);
+    }
+    
     [HttpPost("{gameCode}/leave", Name = "LeaveGame")]
     public async Task<ActionResult> LeaveGame(string gameCode, string playerId)
     {

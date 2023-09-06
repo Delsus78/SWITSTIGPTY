@@ -15,6 +15,20 @@ public class GameHub : Hub
 
     public async Task JoinGroup(string groupName, string playerId)
     {
+        // reconnecter le joueur au groupe s'il est déjà connecté
+        if (GroupMembers.TryGetValue(groupName, out var members))
+        {
+            if (members.Any(x => x.Item2 == playerId))
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+                
+                // change the connection id of the player
+                members.RemoveWhere(x => x.Item2 == playerId);
+                members.Add(new Tuple<string, string>(Context.ConnectionId, playerId));
+
+                return;
+            }
+        }
         await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
 
         // Ajouter le membre au groupe dans la collection
