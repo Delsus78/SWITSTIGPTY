@@ -204,13 +204,15 @@ public class GameService
             return JsonConvert.DeserializeObject<Tracks>(result);
         }
 
+        var tracksForSong = await GetTracksAsync();
+        
         for (var i = 0; i < count; i++)
         {
-            var tracksForSong = await GetTracksAsync();
             var randomTrack = tracksForSong.tracks.ElementAt(_random.Next(tracksForSong.tracks.Count));
 
-            var songNameSong = randomTrack.Name.Replace("\"", "");
-            var artistNameSong = randomTrack.Artists[0].Name.Replace("\"", "");
+            var songNameSong = randomTrack.Name.Replace("\"", "").Replace(" ", "%20");
+            var artistNameSong = randomTrack.Artists[0].Name.Replace("\"", "").Replace(" ", "%20");
+            
 
             var youtubeUrlSong = await GetYoutubeUrl(songNameSong, artistNameSong);
 
