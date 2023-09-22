@@ -126,13 +126,13 @@ public class GameService
 
     #region GenerateRandomSongsUrls
     
-    private async Task<string> GetYoutubeUrl(string songName, string artistName)
+    private async Task<string> GetYoutubeCode(string songName, string artistName)
     {
         var url = _randomSongApiUrl + "get-song-video?song=" + songName + "&artist="+ artistName;
         var result = await ApiUtils.GetAsync(url);
         
 
-        return "https://youtu.be/" + result.Replace("\"", "");
+        return result.Replace("\"", "");
     }
     private List<string> GetJsonOfAllGenres()
     {
@@ -208,15 +208,18 @@ public class GameService
         
         for (var i = 0; i < count; i++)
         {
-            var randomTrack = tracksForSong.tracks.ElementAt(_random.Next(tracksForSong.tracks.Count));
+            var youtubeUrlCode = "";
+            var tries = 0;
+            while (youtubeUrlCode.Equals("") && tries < 25)
+            {
+                var randomTrack = tracksForSong.tracks.ElementAt(_random.Next(tracksForSong.tracks.Count));
+                tries++;
+                var songNameSong = randomTrack.Name.Replace("\"", "").Replace(" ", "%20");
+                var artistNameSong = randomTrack.Artists[0].Name.Replace("\"", "").Replace(" ", "%20");
+                youtubeUrlCode = await GetYoutubeCode(songNameSong, artistNameSong);
+            }
 
-            var songNameSong = randomTrack.Name.Replace("\"", "").Replace(" ", "%20");
-            var artistNameSong = randomTrack.Artists[0].Name.Replace("\"", "").Replace(" ", "%20");
-            
-
-            var youtubeUrlSong = await GetYoutubeUrl(songNameSong, artistNameSong);
-
-            res.Add(youtubeUrlSong);
+            res.Add("https://youtu.be/" + youtubeUrlCode);
         }
 
         return res;
