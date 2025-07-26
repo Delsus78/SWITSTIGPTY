@@ -9,12 +9,14 @@ namespace SWITSTIGPTY.Services;
 /// Hub SignalR pour les parties de jeu
 /// </summary>
 [SignalRHub]
-public class GameHub : Hub
+public class GameHub(ILogger<GameHub> logger) : Hub
 {
     public static readonly ConcurrentDictionary<string, HashSet<Tuple<string, string>>> GroupMembers = new();
 
     public async Task JoinGroup(string groupName, string playerId)
     {
+        logger.LogInformation("Player {PlayerId} is joining group {GroupName}", playerId, groupName);
+        
         // reconnecter le joueur au groupe s'il est déjà connecté
         if (GroupMembers.TryGetValue(groupName, out var members))
         {
@@ -44,6 +46,8 @@ public class GameHub : Hub
 
     public async Task LeaveGroup(string groupName)
     {
+        logger.LogInformation("Player {PlayerId} is leaving group {GroupName}", Context.ConnectionId, groupName);
+        
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
 
         // Supprimer le membre du groupe dans la collection

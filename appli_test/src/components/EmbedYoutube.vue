@@ -16,8 +16,8 @@ export default {
     },
     computed: {
         videoId() {
-            // Une simple logique pour extraire l'ID de la vidéo à partir de l'URL (ceci est basique et pourrait nécessiter d'être adapté selon la forme exacte de vos URL)
-            return this.youtubeLink.split("youtu.be/")[1];
+            console.log("youtubeLink", this.youtubeLink);
+            return this.youtubeLink.split("https://www.youtube.com/watch?v=")[1];
         },
         videoUrl() {
             return `https://www.youtube.com/embed/${this.videoId}?autoplay=1&mute=0&vq=small`;

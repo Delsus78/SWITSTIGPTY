@@ -32,6 +32,8 @@ const { isOwner, youtubeUrl, players } = defineProps({
     }
 });
 
+
+
 </script>
 
 <template>

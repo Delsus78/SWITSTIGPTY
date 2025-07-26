@@ -6,20 +6,8 @@ namespace SWITSTIGPTY.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class GameController : ControllerBase
+public class GameController(GameService gameService) : ControllerBase
 {
-
-    private readonly ILogger<GameController> _logger;
-    private readonly GameService _gameService;
-
-    public GameController(
-        ILogger<GameController> logger,
-        GameService gameService)
-    {
-        _logger = logger;
-        _gameService = gameService;
-    }
-
     /// <summary>
     /// 
     /// </summary>
@@ -29,47 +17,44 @@ public class GameController : ControllerBase
     /// genre</param>
     /// <param name="genre">
     /// </param>
+    /// <param name="numberOfManches"></param>
+    /// <param name="pointsPerRightVote"></param>
+    /// <param name="pointsPerVoteFooled"></param>
     /// <returns></returns>
     [HttpGet(Name = "CreateGame")]
-    public async Task<Game> CreateGame(string type, string? genre, int numberOfManches, int pointsPerRightVote, int pointsPerVoteFooled)
+    public Game CreateGame(string type, string? genre, int numberOfManches, int pointsPerRightVote, int pointsPerVoteFooled)
     {
-        return await _gameService.CreateGame(type, genre, numberOfManches, pointsPerRightVote, pointsPerVoteFooled);
+        return gameService.CreateGame(type, genre, numberOfManches, pointsPerRightVote, pointsPerVoteFooled);
     }
     
     [HttpGet("{gameCode}", Name = "GetGame")]
-    public async Task<Game> GetGame(string gameCode)
+    public Game GetGame(string gameCode)
     {
-        return await _gameService.GetGame(gameCode);
+        return gameService.GetGame(gameCode);
     }
 
     [HttpGet("all", Name = "GetGames")]
-    public async Task<IEnumerable<Game>> GetGames()
+    public IEnumerable<Game> GetGames()
     {
-        return _gameService.GetGames();
-    }
-    
-    [HttpGet("allgenres", Name = "GetAllGenres")]
-    public async Task<IEnumerable<string>> GetAllGenres()
-    {
-        return _gameService.GetAllGenres();
+        return gameService.GetGames();
     }
     
     [HttpPost("{gameCode}/join", Name = "JoinGame")]
     public async Task<JoinGameDTO> JoinGame(string gameCode, string playerName)
     {
-        return await _gameService.JoinGame(gameCode, playerName);
+        return await gameService.JoinGame(gameCode, playerName);
     }
     
     [HttpPost("{gameCode}/reconnect", Name = "Reconnect")]
-    public async Task<JoinGameDTO> Reconnect(string gameCode, string playerId)
+    public JoinGameDTO Reconnect(string gameCode, string playerId)
     {
-        return await _gameService.ReconnectGame(gameCode, playerId);
+        return gameService.ReconnectGame(gameCode, playerId);
     }
     
     [HttpPost("{gameCode}/leave", Name = "LeaveGame")]
     public async Task<ActionResult> LeaveGame(string gameCode, string playerId)
     {
-        await _gameService.LeaveGame(gameCode, playerId);
+        await gameService.LeaveGame(gameCode, playerId);
         
         return Ok();
     }
@@ -77,7 +62,7 @@ public class GameController : ControllerBase
     [HttpPost("{gameCode}/{votantId}/vote/{voteId}", Name = "Vote")]
     public async Task<ActionResult> Vote(string gameCode, string votantId, string voteId)
     {
-        await _gameService.Vote(gameCode, votantId, voteId);
+        await gameService.Vote(gameCode, votantId, voteId);
         
         return Ok();
     }
@@ -85,7 +70,7 @@ public class GameController : ControllerBase
     [HttpPost("{gameCode}/end", Name = "EndGame")]
     public async Task<ActionResult> EndGame(string gameCode)
     {
-        await _gameService.EndGame(gameCode);
+        await gameService.EndGame(gameCode);
         
         return Ok();
     }
@@ -93,7 +78,7 @@ public class GameController : ControllerBase
     [HttpPost("{gameCode}/next", Name = "NextManche")]
     public async Task<ActionResult> NextManche(string gameCode)
     {
-        await _gameService.NextRound(gameCode);
+        await gameService.NextRound(gameCode);
         
         return Ok();
     }
@@ -101,7 +86,7 @@ public class GameController : ControllerBase
     [HttpPost("{gameCode}/results", Name = "EndRound")]
     public async Task<ActionResult> EndRound(string gameCode)
     {
-        await _gameService.EndRound(gameCode);
+        await gameService.EndRound(gameCode);
         
         return Ok();
     }
