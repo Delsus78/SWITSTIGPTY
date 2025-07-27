@@ -1,7 +1,7 @@
 ﻿# Build de l'API .NET
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
-COPY SWITSTIGPTY/ ./SWITSTIGPTY/
+COPY . .
 WORKDIR /src/SWITSTIGPTY
 RUN dotnet restore
 RUN dotnet publish -c Release -o /app/publish
