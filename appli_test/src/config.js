@@ -1,5 +1,5 @@
 // src/config.js
 
 export default {
-    apiUrl: 'switstigpty-api.team-unc.fr/'
+    apiUrl: 'http://switstigpty-api.team-unc.fr/'
 };
