@@ -16,8 +16,4 @@ jobs:
           username: ${{ secrets.MINIPC_USER }}
           key: ${{ secrets.MINIPC_SSH_KEY }}
           port: 22
-          script: |
-            cd 'C:\Users\antho\projects\switstigpty'
-            docker-compose pull
-            docker-compose up -d
-          shell: powershell
+          script: cd C:\Users\antho\projects\switstigpty && docker-compose pull && docker-compose up -d
