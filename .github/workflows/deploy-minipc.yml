@@ -1,0 +1,22 @@
+﻿name: Deploy to MiniPC
+
+on:
+  push:
+    branches:
+      - prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy on mini PC via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.MINIPC_HOST }}
+          username: ${{ secrets.MINIPC_USER }}
+          key: ${{ secrets.MINIPC_SSH_KEY }}
+          port: 22
+          script: |
+            cd C:\Users\antho\projects\switstigpty
+            docker-compose pull
+            docker-compose up -d
