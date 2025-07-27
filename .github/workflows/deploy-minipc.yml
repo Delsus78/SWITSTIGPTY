@@ -16,4 +16,4 @@ jobs:
           username: ${{ secrets.MINIPC_USER }}
           key: ${{ secrets.MINIPC_SSH_KEY }}
           port: 22
-          script: cd C:\Users\antho\projects\switstigpty && docker logout && docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }} && docker-compose pull && docker-compose up -d
+          script: cd C:\Users\antho\projects\switstigpty && docker-compose pull && docker-compose up -d
