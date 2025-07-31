@@ -20,7 +20,8 @@ export default {
             return this.youtubeLink.split("https://www.youtube.com/watch?v=")[1];
         },
         videoUrl() {
-            return `https://www.youtube.com/embed/${this.videoId}?autoplay=1&mute=0&vq=small`;
+          // start the music directly at 30 seconds
+          return `https://www.youtube.com/embed/${this.videoId}?autoplay=1&mute=0&vq=small&t=30`;
         }
     }
 };

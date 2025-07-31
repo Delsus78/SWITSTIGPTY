@@ -4,7 +4,7 @@ export default createStore({
     state: {
         game: {
             gameCode: null,
-            playerCount: 0,
+            playersName: 0,
             players: [],
             songsUrls: [],
             numberOfManches: 0,
@@ -32,8 +32,8 @@ export default createStore({
         setGameCode(state, code) {
             state.game.gameCode = code;
         },
-        setPlayerCount(state, count) {
-            state.game.playerCount = count;
+        setPlayersName(state, count) {
+            state.game.playersName = count;
         },
         setPlayers(state, players) {
             state.game.players = players;
@@ -91,7 +91,7 @@ export default createStore({
         clearAll(state) {
             state.game = {
                 gameCode: null,
-                playerCount: 0,
+                playersName: 0,
                 players: [],
                 songsUrls: [],
                 numberOfManches: 0,
@@ -129,8 +129,8 @@ export default createStore({
         setGamePhase({ commit }, phase) {
             commit('setGamePhase', phase);
         },
-        setPlayerCount({ commit }, count) {
-            commit('setPlayerCount', count);
+        setPlayersName({ commit }, count) {
+            commit('setPlayersName', count);
         },
         setPlayers({ commit }, players) {
             commit('setPlayers', players);

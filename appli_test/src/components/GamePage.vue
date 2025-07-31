@@ -82,8 +82,8 @@ connection.on("new-vote", (votingPlayerId) => {
     store.dispatch('setHasVoted', votingPlayerId);
 });
 
-connection.on("player-number-changed", (message) => {
-    store.dispatch('setPlayerCount', message);
+connection.on("players-changed", (message) => {
+    store.dispatch('setPlayersName', message);
 });
 
 // END SIGNALR PART

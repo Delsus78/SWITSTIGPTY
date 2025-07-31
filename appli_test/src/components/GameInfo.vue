@@ -1,7 +1,9 @@
 <template>
     <div class="game-info">
         <ul>
-            <li><span class="number-info">{{ game.playerCount }}</span> Joueurs</li>
+            <li><h2>Informations sur la partie</h2></li>
+            <li>Joueurs :</li>
+            <li><span class="number-info">{{ game.playersName }}</span></li>
             <li><span class="number-info">{{ game.numberOfManches }}</span> Manches</li>
             <li>Manche <span class="number-info">{{ game.currentManche }}</span> en cours</li>
             <li><span class="number-info">{{ game.pointPerRightVote }}</span> Points par vote sur l'imposteur</li>
@@ -21,7 +23,7 @@ export default {
             required: true,
             default: () => ({
                 gameCode: null,
-                playerCount: 0,
+                playersName: "",
                 numberOfManches: 0,
                 currentManche: 0,
                 pointPerRightVote: 0,

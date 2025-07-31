@@ -38,8 +38,8 @@ const { isOwner, game } = defineProps({
         <p>Share this code with your friends so they can join your game.</p>
         <template #important>{{game.gameCode}}</template>
         <template #playerNumber>
-            <div v-if="game.playerCount !== null">
-                {{game.playerCount}} in lobby
+            <div v-if="game.playersName !== null">
+                {{game.playersName}} in lobby
             </div>
         </template>
         <div v-if="isOwner">
