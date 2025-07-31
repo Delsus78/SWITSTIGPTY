@@ -239,6 +239,11 @@ public class GameService(
             }
             votedPlayer.VotersNames.Add(votant.Name);
         }
+        else if (!game.IsImpostorRevealedToHimself && votedPlayer.IsImpostor)
+        {
+            votant.score += game.PointForImpostorFoundHimself;
+            votedPlayer.VotersNames.Add(votant.Name);
+        }
         
         await gameHubService.NotifyNewVote(gameCode, votantId);
     }

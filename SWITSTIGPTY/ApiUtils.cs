@@ -34,7 +34,7 @@ public static class ApiUtils
         {
             var response = await client.GetAsync(uri);
             var html = await response.Content.ReadAsStringAsync();
-            return html.Contains("og:image");
+            return !html.Contains("UNPLAYABLE") && html.Contains("og:image");
         }
         catch
         {
