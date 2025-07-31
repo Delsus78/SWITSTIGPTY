@@ -28,5 +28,17 @@ public static class ApiUtils
         return await response.Content.ReadAsStringAsync();
     }
 
-    // Ajoutez d'autres méthodes pour PUT, DELETE, etc. selon vos besoins.
+    public static async Task<bool> IsUrlValidAsync(string uri)
+    {
+        try
+        {
+            var response = await client.GetAsync(uri);
+            var html = await response.Content.ReadAsStringAsync();
+            return html.Contains("og:image");
+        }
+        catch
+        {
+            return false; // Si une exception est levée, on considère que l'URL n'est pas valide.
+        }
+    }
 }

@@ -86,7 +86,7 @@ public class GameService(
 
         game.Players.Add(player);
         
-        await gameHubService.NotifyNewPlayerNumber(gameCode, game.PlayerCount.ToString());
+        await gameHubService.NotifyNewPlayerNumber(gameCode, game.Players);
         
         return new JoinGameDTO
         {
@@ -108,16 +108,24 @@ public class GameService(
         
         gameHubService.LeaveGroup(gameCode, playerId);
         
-        await gameHubService.NotifyNewPlayerNumber(gameCode, game.PlayerCount.ToString());
+        await gameHubService.NotifyNewPlayerNumber(gameCode, game.Players);
     }
 
     #region GenerateRandomSongsUrls
 
     private async Task<List<string>> GenerateSongsUrls()
     {
-        var songsUrls = await GenerateRandomSongsUrls(2);
+        var validSongsUrls = new List<string>();
+        var songsUrls = await GenerateRandomSongsUrls(10);
         
-        return songsUrls;
+        foreach (var songUrl in songsUrls.TakeWhile(songUrl => validSongsUrls.Count < 2))
+            if (await ApiUtils.IsUrlValidAsync(songUrl)) 
+                validSongsUrls.Add(songUrl);
+
+        if (validSongsUrls.Count < 2)
+            return await GenerateSongsUrls();
+        
+        return validSongsUrls;
     }
     
     private Random _random = new();

@@ -80,7 +80,7 @@ public static class AppBuilderExtensions
             o.AddPolicy("default", builder =>
             {
                 Console.Out.WriteLine("Adding cors policy");
-                builder.WithOrigins("http://localhost", "http://switstigpty.team-unc.fr") // Ajoutez votre domaine client ici
+                builder.WithOrigins("http://localhost:5173", "http://localhost", "http://switstigpty.team-unc.fr") // Ajoutez votre domaine client ici
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials(); // Important pour SignalR

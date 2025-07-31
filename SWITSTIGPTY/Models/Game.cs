@@ -7,6 +7,9 @@ public class Game
 {
     public string GameCode { get; set; }
     public int PlayerCount => Players.Count;
+    public string PlayersName => Players.Count != 0 
+        ? Players.Select(p => p.Name).Aggregate((current, next) => $"{current}, {next}") 
+        : "No players yet";
     public List<string> SongsUrls { get; set; }
 
     [JsonIgnore]

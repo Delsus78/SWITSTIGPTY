@@ -6,10 +6,13 @@ namespace SWITSTIGPTY.Services;
 public class GameHubService(IHubContext<GameHub> hubContext, ILogger<GameHubService> logger)
 {
 
-    public async Task NotifyNewPlayerNumber(string groupName, string message)
+    public async Task NotifyNewPlayerNumber(string groupName, List<Player> players)
     {
+        // parse the player list to a message
+        var message = players.Select(p => p.Name).Aggregate((current, next) => $"{current}, {next}");
+        
         logger.LogInformation("Sending player number change notification to group {GroupName}: {Message}", groupName, message);
-        await hubContext.Clients.Group(groupName).SendAsync("player-number-changed", message);
+        await hubContext.Clients.Group(groupName).SendAsync("players-changed", message);
     }
     
     public async Task SendToGroupExceptListAsync(string groupName, string emitName ,object message, object messageToExcept, List<string> playersIdToExcept)
