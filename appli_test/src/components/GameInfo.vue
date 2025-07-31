@@ -1,13 +1,15 @@
 <template>
     <div class="game-info">
         <ul>
-            <li><span class="number-info">{{ game.playerCount }}</span> Joueurs</li>
+            <li><h2>Informations sur la partie</h2></li>
+            <li>Joueurs :</li>
+            <li><span class="number-info">{{ game.playersName }}</span></li>
             <li><span class="number-info">{{ game.numberOfManches }}</span> Manches</li>
             <li>Manche <span class="number-info">{{ game.currentManche }}</span> en cours</li>
             <li><span class="number-info">{{ game.pointPerRightVote }}</span> Points par vote sur l'imposteur</li>
             <li><span class="number-info">{{ game.pointPerVoteFooled }}</span> Points par vote trompé en tant qu'imposteur</li>
-            <li v-if="game.genre">Genre : <span class="number-info">{{ game.genre }}</span></li>
-            <li>Type : <span class="number-info">{{ game.type }}</span></li>
+            <li v-if="game.isImpostorRevealedToHimself"><span class="number-info">L'imposteur sait qu'il est l'imposteur</span></li>
+            <li v-if="!game.isImpostorRevealedToHimself"><span class="number-info">{{ game.pointForImpostorFoundHimself }}</span> Points si l'imposteur se trouve</li>
         </ul>
     </div>
 </template>
@@ -21,13 +23,13 @@ export default {
             required: true,
             default: () => ({
                 gameCode: null,
-                playerCount: 0,
+                playersName: "",
                 numberOfManches: 0,
                 currentManche: 0,
                 pointPerRightVote: 0,
                 pointPerVoteFooled: 0,
-                genre: "",
-                type: ""
+                pointForImpostorFoundHimself: 0,
+                isImpostorRevealedToHimself: false
             })
         }
     }

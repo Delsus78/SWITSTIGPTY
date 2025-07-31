@@ -29,12 +29,15 @@ public class GameService(
         return finalString;
     }
 
-    public Game CreateGame(string type, string? genre, int numberOfManches, int pointsPerRightVote = 2, int pointsPerVoteFooled = 1)
+    public Game CreateGame(int numberOfManches, int pointsPerRightVote = 2, int pointsPerVoteFooled = 1, int pointsForImpostorFoundHimself = 0, bool isImpostorRevealedToHimself = false)
     {
-        logger.LogInformation("Creating game with type: {Type}, genre: {Genre}, numberOfManches: {NumberOfManches}, pointsPerRightVote: {PointsPerRightVote}, pointsPerVoteFooled: {PointsPerVoteFooled}", 
-            type, genre, numberOfManches, pointsPerRightVote, pointsPerVoteFooled);
+        logger.LogInformation("Creating game with numberOfManches: {NumberOfManches}, pointsPerRightVote: {PointsPerRightVote}, pointsPerVoteFooled: {PointsPerVoteFooled} and pointsForImpostorFoundHimself: {PointsForImpostorFoundHimself} and isImpostorRevealedToHimself: {IsImpostorRevealedToHimself}"
+            , numberOfManches, pointsPerRightVote, pointsPerVoteFooled, pointsForImpostorFoundHimself, isImpostorRevealedToHimself);
         
         var gameCode = GenerateId();
+        
+        if (isImpostorRevealedToHimself)
+            pointsForImpostorFoundHimself = 0; // if impostor is revealed to himself, he cannot score points for finding himself
         
         var game = new Game
         {
@@ -45,8 +48,8 @@ public class GameService(
             CurrentManche = 0,
             PointPerRightVote = pointsPerRightVote,
             PointPerVoteFooled = pointsPerVoteFooled,
-            Type = type,
-            Genre = genre
+            PointForImpostorFoundHimself = pointsForImpostorFoundHimself,
+            IsImpostorRevealedToHimself = isImpostorRevealedToHimself
         };
 
         // register the game
@@ -86,7 +89,7 @@ public class GameService(
 
         game.Players.Add(player);
         
-        await gameHubService.NotifyNewPlayerNumber(gameCode, game.PlayerCount.ToString());
+        await gameHubService.NotifyNewPlayerNumber(gameCode, game.Players);
         
         return new JoinGameDTO
         {
@@ -108,16 +111,24 @@ public class GameService(
         
         gameHubService.LeaveGroup(gameCode, playerId);
         
-        await gameHubService.NotifyNewPlayerNumber(gameCode, game.PlayerCount.ToString());
+        await gameHubService.NotifyNewPlayerNumber(gameCode, game.Players);
     }
 
     #region GenerateRandomSongsUrls
 
     private async Task<List<string>> GenerateSongsUrls()
     {
-        var songsUrls = await GenerateRandomSongsUrls(2);
+        var validSongsUrls = new List<string>();
+        var songsUrls = await GenerateRandomSongsUrls(10);
         
-        return songsUrls;
+        foreach (var songUrl in songsUrls.TakeWhile(songUrl => validSongsUrls.Count < 2))
+            if (await ApiUtils.IsUrlValidAsync(songUrl)) 
+                validSongsUrls.Add(songUrl);
+
+        if (validSongsUrls.Count < 2)
+            return await GenerateSongsUrls();
+        
+        return validSongsUrls;
     }
     
     private Random _random = new();
@@ -196,8 +207,8 @@ public class GameService(
         await gameHubService.SendToGroupExceptListAsync(
             game.GameCode, 
             emitCode,
-            new StartingGameDTO {Game = game, IndexOfSong = randomMainSongNumber}, 
-            new StartingGameDTO {Game = game, IndexOfSong = otherSongNumber},
+            new StartingGameDTO {Game = game, IndexOfSong = randomMainSongNumber, IsImpostor = false}, 
+            new StartingGameDTO {Game = game, IndexOfSong = otherSongNumber, IsImpostor = true},
             impostors.Select(i => i.Id).ToList());
     }
     
@@ -226,6 +237,11 @@ public class GameService(
                 var impostors = game.Players.Where(p => p.IsImpostor).ToList();
                 impostors.ForEach(i => i.score += game.PointPerVoteFooled);
             }
+            votedPlayer.VotersNames.Add(votant.Name);
+        }
+        else if (!game.IsImpostorRevealedToHimself && votedPlayer.IsImpostor)
+        {
+            votant.score += game.PointForImpostorFoundHimself;
             votedPlayer.VotersNames.Add(votant.Name);
         }
         

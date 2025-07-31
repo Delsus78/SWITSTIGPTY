@@ -7,6 +7,9 @@ public class Game
 {
     public string GameCode { get; set; }
     public int PlayerCount => Players.Count;
+    public string PlayersName => Players.Count != 0 
+        ? Players.Select(p => p.Name).Aggregate((current, next) => $"{current}, {next}") 
+        : "No players yet";
     public List<string> SongsUrls { get; set; }
 
     [JsonIgnore]
@@ -23,8 +26,8 @@ public class Game
     public int CurrentManche { get; set; }
     public int PointPerRightVote { get; set; }
     public int PointPerVoteFooled { get; set; }
-    public string? Genre { get; set; }
-    public string Type { get; set; }
+    public int PointForImpostorFoundHimself { get; set; } = 0;
+    public bool IsImpostorRevealedToHimself { get; set; } = false;
     
     [JsonIgnore]
     private static readonly List<string> Gamephases = new()

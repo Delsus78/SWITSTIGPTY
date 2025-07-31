@@ -4,16 +4,16 @@ export default createStore({
     state: {
         game: {
             gameCode: null,
-            playerCount: 0,
+            playersName: 0,
             players: [],
             songsUrls: [],
             numberOfManches: 0,
             currentManche: 0,
             pointPerRightVote: 0,
             pointPerVoteFooled: 0,
+            pointForImpostorFoundHimself: 0,
+            isImpostorRevealedToHimself: false,
             gamePhase: "",
-            genre: "",
-            type: ""
         },
         player: {
             id: "",
@@ -32,8 +32,8 @@ export default createStore({
         setGameCode(state, code) {
             state.game.gameCode = code;
         },
-        setPlayerCount(state, count) {
-            state.game.playerCount = count;
+        setPlayersName(state, count) {
+            state.game.playersName = count;
         },
         setPlayers(state, players) {
             state.game.players = players;
@@ -53,14 +53,8 @@ export default createStore({
         setPointPerVoteFooled(state, point) {
             state.game.pointPerVoteFooled = point;
         },
-        setGenre(state, genre) {
-            state.game.genre = genre;
-        },
         setGamePhase(state, phase) {
             state.game.gamePhase = phase;
-        },
-        setType(state, type) {
-            state.game.type = type;
         },
         // PLAYER MUTATIONS
         setPlayer(state, player) {
@@ -91,16 +85,15 @@ export default createStore({
         clearAll(state) {
             state.game = {
                 gameCode: null,
-                playerCount: 0,
+                playersName: 0,
                 players: [],
                 songsUrls: [],
                 numberOfManches: 0,
                 currentManche: 0,
                 pointPerRightVote: 0,
                 pointPerVoteFooled: 0,
-                gamePhase: "",
-                genre: "",
-                type: ""
+                pointForImpostorFoundHimself: 0,
+                isImpostorRevealedToHimself: false
             };
             state.player = {
                 id: "",
@@ -129,8 +122,8 @@ export default createStore({
         setGamePhase({ commit }, phase) {
             commit('setGamePhase', phase);
         },
-        setPlayerCount({ commit }, count) {
-            commit('setPlayerCount', count);
+        setPlayersName({ commit }, count) {
+            commit('setPlayersName', count);
         },
         setPlayers({ commit }, players) {
             commit('setPlayers', players);
@@ -149,12 +142,6 @@ export default createStore({
         },
         setPointPerVoteFooled({ commit }, point) {
             commit('setPointPerVoteFooled', point);
-        },
-        setGenre({ commit }, genre) {
-            commit('setGenre', genre);
-        },
-        setType({ commit }, type) {
-            commit('setType', type);
         },
         // PLAYER ACTIONS
         setPlayer({ commit }, player) {

@@ -17,7 +17,7 @@ const handleVote = async (playerId) => {
     emit('vote', playerId);
 }
 
-const { isOwner, youtubeUrl, players } = defineProps({
+const { isOwner, youtubeUrl, players, impostorRevealedToHimself } = defineProps({
     isOwner: {
         type: Boolean,
         default: false
@@ -29,6 +29,14 @@ const { isOwner, youtubeUrl, players } = defineProps({
     players: {
         type: Array,
         default: []
+    },
+    impostorRevealedToHimself: {
+        type: Boolean,
+        default: false
+    },
+    isImpostor: {
+        type: Boolean,
+        default: false
     }
 });
 
@@ -44,6 +52,10 @@ const { isOwner, youtubeUrl, players } = defineProps({
         </template>
         <EmbedYoutube :youtube-link="youtubeUrl"></EmbedYoutube>
         <ValidationButton v-if="isOwner" msg="STOOOOP" @onClick="handleEndRound" color="red"/>
+        <ValidationButton v-else msg="WAITING FOR THE OWNER" color="grey" disabled/>
+        <span class="impostor" v-if="impostorRevealedToHimself && isImpostor">
+            <strong>Vous etes l'imposteur !</strong>
+        </span>
     </WelcomeItem>
 
     <WelcomeItem>
@@ -56,5 +68,10 @@ const { isOwner, youtubeUrl, players } = defineProps({
 </template>
 
 <style scoped>
-
+.impostor {
+    color: var(--vt-c-red-2);
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-top: 1rem;
+}
 </style>
