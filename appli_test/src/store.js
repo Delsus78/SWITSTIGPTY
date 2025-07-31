@@ -11,9 +11,9 @@ export default createStore({
             currentManche: 0,
             pointPerRightVote: 0,
             pointPerVoteFooled: 0,
+            pointForImpostorFoundHimself: 0,
+            isImpostorRevealedToHimself: false,
             gamePhase: "",
-            genre: "",
-            type: ""
         },
         player: {
             id: "",
@@ -53,14 +53,8 @@ export default createStore({
         setPointPerVoteFooled(state, point) {
             state.game.pointPerVoteFooled = point;
         },
-        setGenre(state, genre) {
-            state.game.genre = genre;
-        },
         setGamePhase(state, phase) {
             state.game.gamePhase = phase;
-        },
-        setType(state, type) {
-            state.game.type = type;
         },
         // PLAYER MUTATIONS
         setPlayer(state, player) {
@@ -98,9 +92,8 @@ export default createStore({
                 currentManche: 0,
                 pointPerRightVote: 0,
                 pointPerVoteFooled: 0,
-                gamePhase: "",
-                genre: "",
-                type: ""
+                pointForImpostorFoundHimself: 0,
+                isImpostorRevealedToHimself: false
             };
             state.player = {
                 id: "",
@@ -149,12 +142,6 @@ export default createStore({
         },
         setPointPerVoteFooled({ commit }, point) {
             commit('setPointPerVoteFooled', point);
-        },
-        setGenre({ commit }, genre) {
-            commit('setGenre', genre);
-        },
-        setType({ commit }, type) {
-            commit('setType', type);
         },
         // PLAYER ACTIONS
         setPlayer({ commit }, player) {

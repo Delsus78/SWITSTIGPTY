@@ -11,20 +11,18 @@ public class GameController(GameService gameService) : ControllerBase
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="type">
-    /// top-all-time
-    /// all
-    /// genre</param>
-    /// <param name="genre">
-    /// </param>
     /// <param name="numberOfManches"></param>
     /// <param name="pointsPerRightVote"></param>
     /// <param name="pointsPerVoteFooled"></param>
+    /// <param name="pointsForImpostorFoundHimself"></param>
+    /// <param name="isImpostorRevealedToHimself"></param>
     /// <returns></returns>
     [HttpGet(Name = "CreateGame")]
-    public Game CreateGame(string type, string? genre, int numberOfManches, int pointsPerRightVote, int pointsPerVoteFooled)
+    public Game CreateGame(int numberOfManches, int pointsPerRightVote, int pointsPerVoteFooled, 
+        int pointsForImpostorFoundHimself = 0, bool isImpostorRevealedToHimself = false)
     {
-        return gameService.CreateGame(type, genre, numberOfManches, pointsPerRightVote, pointsPerVoteFooled);
+        return gameService.CreateGame(numberOfManches, pointsPerRightVote, pointsPerVoteFooled, 
+            pointsForImpostorFoundHimself, isImpostorRevealedToHimself);
     }
     
     [HttpGet("{gameCode}", Name = "GetGame")]

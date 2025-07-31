@@ -29,12 +29,15 @@ public class GameService(
         return finalString;
     }
 
-    public Game CreateGame(string type, string? genre, int numberOfManches, int pointsPerRightVote = 2, int pointsPerVoteFooled = 1)
+    public Game CreateGame(int numberOfManches, int pointsPerRightVote = 2, int pointsPerVoteFooled = 1, int pointsForImpostorFoundHimself = 0, bool isImpostorRevealedToHimself = false)
     {
-        logger.LogInformation("Creating game with type: {Type}, genre: {Genre}, numberOfManches: {NumberOfManches}, pointsPerRightVote: {PointsPerRightVote}, pointsPerVoteFooled: {PointsPerVoteFooled}", 
-            type, genre, numberOfManches, pointsPerRightVote, pointsPerVoteFooled);
+        logger.LogInformation("Creating game with numberOfManches: {NumberOfManches}, pointsPerRightVote: {PointsPerRightVote}, pointsPerVoteFooled: {PointsPerVoteFooled} and pointsForImpostorFoundHimself: {PointsForImpostorFoundHimself} and isImpostorRevealedToHimself: {IsImpostorRevealedToHimself}"
+            , numberOfManches, pointsPerRightVote, pointsPerVoteFooled, pointsForImpostorFoundHimself, isImpostorRevealedToHimself);
         
         var gameCode = GenerateId();
+        
+        if (isImpostorRevealedToHimself)
+            pointsForImpostorFoundHimself = 0; // if impostor is revealed to himself, he cannot score points for finding himself
         
         var game = new Game
         {
@@ -45,8 +48,8 @@ public class GameService(
             CurrentManche = 0,
             PointPerRightVote = pointsPerRightVote,
             PointPerVoteFooled = pointsPerVoteFooled,
-            Type = type,
-            Genre = genre
+            PointForImpostorFoundHimself = pointsForImpostorFoundHimself,
+            IsImpostorRevealedToHimself = isImpostorRevealedToHimself
         };
 
         // register the game
@@ -204,8 +207,8 @@ public class GameService(
         await gameHubService.SendToGroupExceptListAsync(
             game.GameCode, 
             emitCode,
-            new StartingGameDTO {Game = game, IndexOfSong = randomMainSongNumber}, 
-            new StartingGameDTO {Game = game, IndexOfSong = otherSongNumber},
+            new StartingGameDTO {Game = game, IndexOfSong = randomMainSongNumber, IsImpostor = false}, 
+            new StartingGameDTO {Game = game, IndexOfSong = otherSongNumber, IsImpostor = true},
             impostors.Select(i => i.Id).ToList());
     }
     

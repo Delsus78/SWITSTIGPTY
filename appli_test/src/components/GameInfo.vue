@@ -8,8 +8,8 @@
             <li>Manche <span class="number-info">{{ game.currentManche }}</span> en cours</li>
             <li><span class="number-info">{{ game.pointPerRightVote }}</span> Points par vote sur l'imposteur</li>
             <li><span class="number-info">{{ game.pointPerVoteFooled }}</span> Points par vote trompé en tant qu'imposteur</li>
-            <li v-if="game.genre">Genre : <span class="number-info">{{ game.genre }}</span></li>
-            <li>Type : <span class="number-info">{{ game.type }}</span></li>
+            <li v-if="game.isImpostorRevealedToHimself"><span class="number-info">L'imposteur sait qu'il est l'imposteur</span></li>
+            <li v-if="!game.isImpostorRevealedToHimself"><span class="number-info">{{ game.pointForImpostorFoundHimself }}</span> Points si l'imposteur se trouve</li>
         </ul>
     </div>
 </template>
@@ -28,8 +28,8 @@ export default {
                 currentManche: 0,
                 pointPerRightVote: 0,
                 pointPerVoteFooled: 0,
-                genre: "",
-                type: ""
+                pointForImpostorFoundHimself: 0,
+                isImpostorRevealedToHimself: false
             })
         }
     }

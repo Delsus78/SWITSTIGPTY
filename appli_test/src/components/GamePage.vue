@@ -15,6 +15,7 @@ const emit = defineEmits(["leave","vote","endRound", "nextRound"]);
 const game = computed(() => store.state.game);
 const player = computed(() => store.state.player);
 const selectedYoutubeUrl = ref(localStorage.getItem('youtubeUrl') || '');
+const isImpostor = ref(false);
 
 const setGamePhase = (newVal) => {
     store.commit("setGamePhase", newVal);
@@ -60,6 +61,7 @@ connection.on("next-round", (message) => {
 
     assignGame(message.game);
     selectedYoutubeUrl.value = game.value.songsUrls[message.indexOfSong];
+    isImpostor.value = message.isImpostor;
     localStorage.setItem('youtubeUrl', selectedYoutubeUrl.value);
 
     setGamePhase("started");
@@ -112,7 +114,9 @@ const assignGame = (game) => {
     </div>
 
     <div v-else-if="game.gamePhase === 'started'">
-        <InGamePage :isOwner="player.isOwner" :youtubeUrl="selectedYoutubeUrl" :players="game.players"
+        <InGamePage :isOwner="player.isOwner" :youtubeUrl="selectedYoutubeUrl"
+                    :players="game.players" :impostor-revealed-to-himself="game.isImpostorRevealedToHimself"
+                    :is-impostor="isImpostor"
                     @endRound="emit('endRound')" @vote="emit('vote', $event)"></InGamePage>
     </div>
 

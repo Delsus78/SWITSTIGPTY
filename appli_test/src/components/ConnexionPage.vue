@@ -8,21 +8,24 @@ import {ref} from "vue";
 import PseudoIcon from "@/components/icons/IconPseudo.vue";
 
 const gameCode = ref('');
-const type = ref(localStorage.getItem('type') || 'all');
-const genre = ref(localStorage.getItem('genre') || 'rap');
+
 const numberOfManches = ref(+localStorage.getItem('numberOfManches') || 1);
 const pointsPerRightVote = ref(+localStorage.getItem('pointsPerRightVote') || 1);
 const pointsPerVoteFooled = ref(+localStorage.getItem('pointsPerVoteFooled') || 2);
+const pointsForImpostorFoundHimself = ref(+localStorage.getItem('pointsForImpostorFoundHimself') || 2);
+const isImpostorRevealedToHimself = ref(localStorage.getItem('isImpostorRevealedToHimself') === 'true' || false);
+
 const pseudo = ref(localStorage.getItem('pseudo') || '');
 const isErrored = ref(false);
 const emit = defineEmits(["code-retrieved","game-created"]);
 
 const saveLocalStorage = () =>  {
     localStorage.setItem('pseudo', pseudo.value);
-    localStorage.setItem('type', type.value);
-    localStorage.setItem('genre', genre.value);
     localStorage.setItem('numberOfManches', numberOfManches.value.toString());
     localStorage.setItem('pointsPerRightVote', pointsPerRightVote.value.toString());
+    localStorage.setItem('pointsPerVoteFooled', pointsPerVoteFooled.value.toString());
+    localStorage.setItem('pointsForImpostorFoundHimself', pointsForImpostorFoundHimself.value.toString());
+    localStorage.setItem('isImpostorRevealedToHimself', isImpostorRevealedToHimself.value.toString());
 }
 
 const handleCodeValueChanged = (newValue) => {
@@ -51,61 +54,154 @@ const handleGameCreation = () => {
 
     emit('game-created',
         {
-            type: type.value,
-            genre: genre.value,
             numberOfManches: numberOfManches.value,
             pointsPerRightVote: pointsPerRightVote.value,
-            pointsPerVoteFooled: pointsPerVoteFooled.value
+            pointsPerVoteFooled: pointsPerVoteFooled.value,
+            pointsForImpostorFoundHimself: pointsForImpostorFoundHimself.value,
+            isImpostorRevealedToHimself: isImpostorRevealedToHimself.value
         }, pseudo.value);
 }
 
 </script>
 
 <template>
-    <WelcomeItem>
+  <div class="connexion-page">
+    <div class="left-panel">
+      <WelcomeItem>
         <template #icon>
-            <PseudoIcon />
+          <PseudoIcon />
         </template>
         <template #heading>Super pseudo</template>
-
         <TextBox :default-value="pseudo" placeholder="PSEUDO" @value-changed="handlePseudoValueChanged" :is-errored="isErrored"/>
-    </WelcomeItem>
-    <WelcomeItem>
+      </WelcomeItem>
+      <WelcomeItem>
         <template #icon>
-            <GameCodeIcon />
+          <GameCodeIcon />
         </template>
-        <template #heading>Join with Game Code</template>
-
-        <TextBox placeholder="Enter game code here" @value-changed="handleCodeValueChanged"/>
-        <ValidationButton @onClick="handleCodeRetrieved"/>
-    </WelcomeItem>
-    <WelcomeItem>
+        <template #heading>Rejoindre une partie</template>
+        <TextBox placeholder="Code de la partie" @value-changed="handleCodeValueChanged"/>
+        <ValidationButton msg="Rejoindre" @onClick="handleCodeRetrieved"/>
+      </WelcomeItem>
+    </div>
+    <div class="right-panel">
+      <WelcomeItem>
         <template #icon>
-            <IconTooling />
+          <IconTooling />
         </template>
-        <template #heading>Create a Game</template>
-
+        <template #heading>Créer une partie</template>
         <div class="game-settings">
-            <div class="number-inputs-container">
-                <h4>Number of rounds</h4>
-                <h4>Points / right vote</h4>
-                <h4>Points / fooled vote</h4>
+          <div class="number-inputs-container">
+            <div class="input-group">
+              <label>Nombre de manches</label>
+              <text-box :default-value="numberOfManches" placeholder="Nombre de manches" is-number-only @value-changed="numberOfManches = $event" />
             </div>
-            <div class="number-inputs-container">
-                <text-box :default-value="numberOfManches" placeholder="Number of rounds" is-number-only @value-changed="numberOfManches = $event" />
-                <text-box :default-value="pointsPerRightVote" placeholder="Points/ right vote" is-number-only @value-changed="pointsPerRightVote = $event" />
-                <text-box :default-value="pointsPerVoteFooled" placeholder="Points/ fooled vote" is-number-only @value-changed="pointsPerVoteFooled = $event" />
+            <div class="input-group">
+              <label>Points par vote réussi</label>
+              <text-box :default-value="pointsPerRightVote" placeholder="Points/vote réussi" is-number-only @value-changed="pointsPerRightVote = $event" />
             </div>
+            <div class="input-group">
+              <label>Points par vote trompé</label>
+              <text-box :default-value="pointsPerVoteFooled" placeholder="Points/vote trompé" is-number-only @value-changed="pointsPerVoteFooled = $event" />
+            </div>
+            <div class="input-group" v-if="!isImpostorRevealedToHimself">
+              <label>Points si l'imposteur se trouve</label>
+              <text-box :default-value="pointsForImpostorFoundHimself" placeholder="Points/imposteur trouvé" is-number-only @value-changed="pointsForImpostorFoundHimself = $event" />
+            </div>
+            <div class="input-group">
+              <label>Révéler l'imposteur à lui-même ?</label>
+              <label class="switch">
+                <input type="checkbox" v-model="isImpostorRevealedToHimself" />
+                <span class="slider round"></span>
+              </label>
+            </div>
+          </div>
         </div>
-        <ValidationButton msg="Create" @onClick="handleGameCreation"/>
-
-    </WelcomeItem>
+        <ValidationButton msg="Créer" @onClick="handleGameCreation"/>
+      </WelcomeItem>
+    </div>
+  </div>
 </template>
 
 <style scoped>
+.connexion-page {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 3rem;
+  padding: 2rem 0;
+}
+
+.left-panel, .right-panel {
+  border-radius: 1rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  padding: 2rem 2.5rem;
+  min-width: 350px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.game-settings {
+  margin-top: 1rem;
+}
+
 .number-inputs-container {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem; /* Espacement entre les éléments */
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+label {
+  font-size: 0.95rem;
+  color: #444;
+  margin-bottom: 0.2rem;
+}
+
+/* Switch/toggle style */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+input:checked + .slider {
+  background-color: #42b983;
+}
+input:checked + .slider:before {
+  transform: translateX(20px);
 }
 </style>

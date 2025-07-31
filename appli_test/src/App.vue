@@ -48,7 +48,7 @@ const handleCodeRetrieved = async (code, playerName) => {
 
 const handleGameCreated = async (gameParams, playerName) => {
     try {
-        const url = `${config.apiUrl}Game?type=${gameParams.type}${(gameParams.type === "genre" ? ("&genre=" + gameParams.genre) : "")}&numberOfManches=${gameParams.numberOfManches}&pointsPerRightVote=${gameParams.pointsPerRightVote}&pointsPerVoteFooled=${gameParams.pointsPerVoteFooled}`;
+        const url = `${config.apiUrl}Game?numberOfManches=${gameParams.numberOfManches}&pointsPerRightVote=${gameParams.pointsPerRightVote}&pointsPerVoteFooled=${gameParams.pointsPerVoteFooled}&pointsForImpostorFoundHimself=${gameParams.pointsForImpostorFoundHimself}&isImpostorRevealedToHimself=${gameParams.isImpostorRevealedToHimself}`;
         const gameInfo = await axios.get(url);
 
         //join it
